@@ -182,8 +182,37 @@ def prescription_create(request):
         advice = request.POST.get('advice', '')
         follow_up_date = request.POST.get('follow_up_date') or None
 
-        patient = get_object_or_404(Patient, pk=patient_id)
-        doctor = get_object_or_404(Doctor, pk=doctor_id)
+        errors = []
+        if not patient_id:
+            errors.append("রোগী (Patient) নির্বাচন করা আবশ্যক।")
+        if not doctor_id:
+            errors.append("ডাক্তার (Doctor) নির্বাচন করা আবশ্যক।")
+
+        patient = Patient.objects.filter(pk=patient_id).first() if patient_id else None
+        doctor = Doctor.objects.filter(pk=doctor_id).first() if doctor_id else None
+
+        if not patient and patient_id:
+            errors.append("নির্বাচিত রোগী ডাটাবেজে পাওয়া যায়নি।")
+        if not doctor and doctor_id:
+            errors.append("নির্বাচিত ডাক্তার ডাটাবেজে পাওয়া যায়নি।")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            
+            # Re-render with existing context
+            patients = Patient.objects.all().order_by('-created_at')[:50]
+            doctors = Doctor.objects.filter(is_active=True)
+            from pharmacy.models import Medicine
+            from diagnostics.models import LabTest
+            return render(request, 'doctors/prescription_form.html', {
+                'patients': patients,
+                'doctors': doctors,
+                'pre_pat_id': patient_id,
+                'pre_doc_id': doctor_id,
+                'medicines_catalog': Medicine.objects.filter(is_active=True).select_related('category', 'generic').order_by('brand_name'),
+                'lab_tests_catalog': LabTest.objects.filter(is_active=True).order_by('name'),
+            })
 
         rx = Prescription.objects.create(
             patient=patient,
@@ -213,19 +242,33 @@ def prescription_create(request):
                     instruction=instructions[i] if i < len(instructions) else 'After meal'
                 )
 
-        messages.success(request, f"Prescription {rx.prescription_no} created successfully!")
+        messages.success(request, f"Prescription {rx.prescription_no} তৈরি সম্পন্ন হয়েছে!")
         return redirect('prescription_detail', pk=rx.pk)
 
     pre_pat_id = request.GET.get('patient_id', '')
     pre_doc_id = request.GET.get('doctor_id', '')
-    patients = Patient.objects.all().order_by('-created_at')[:30]
+
+    # Auto detect logged in doctor
+    if not pre_doc_id and request.user.is_doctor:
+        doc_profile = Doctor.objects.filter(user=request.user).first()
+        if doc_profile:
+            pre_doc_id = str(doc_profile.id)
+
+    patients = Patient.objects.all().order_by('-created_at')[:50]
     doctors = Doctor.objects.filter(is_active=True)
+
+    from pharmacy.models import Medicine
+    from diagnostics.models import LabTest
+    medicines_catalog = Medicine.objects.filter(is_active=True).select_related('category', 'generic').order_by('brand_name')
+    lab_tests_catalog = LabTest.objects.filter(is_active=True).order_by('name')
 
     return render(request, 'doctors/prescription_form.html', {
         'patients': patients,
         'doctors': doctors,
         'pre_pat_id': pre_pat_id,
         'pre_doc_id': pre_doc_id,
+        'medicines_catalog': medicines_catalog,
+        'lab_tests_catalog': lab_tests_catalog,
     })
 
 @login_required

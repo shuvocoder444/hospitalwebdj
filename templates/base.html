@@ -22,6 +22,9 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@2.0.2"></script>
     
+    <!-- Tom Select CSS for Global Searchable Dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    
     <style>
         :root {
             --primary: #0284c7;
@@ -105,6 +108,82 @@
             background-color: #f8fafc !important;
             color: #0284c7 !important;
             border-color: #94a3b8 !important;
+        }
+
+        /* Tom Select Searchable Dropdown Styling */
+        .ts-wrapper {
+            width: 100% !important;
+        }
+        .ts-control {
+            border-radius: 8px !important;
+            border-color: #cbd5e1 !important;
+            padding: 0.45rem 0.85rem !important;
+            font-size: 0.92rem !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+            min-height: 38px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+        .ts-control:focus, .ts-wrapper.focus .ts-control {
+            border-color: #0284c7 !important;
+            box-shadow: 0 0 0 0.2rem rgba(2, 132, 199, 0.18) !important;
+        }
+        .ts-dropdown {
+            border-radius: 10px !important;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18), 0 10px 10px rgba(0, 0, 0, 0.08) !important;
+            border: 1px solid #94a3b8 !important;
+            z-index: 999999 !important;
+            margin-top: 4px !important;
+            background: #ffffff !important;
+        }
+        .card:has(.ts-wrapper), .card-custom:has(.ts-wrapper), form:has(.ts-wrapper) {
+            overflow: visible !important;
+        }
+        .ts-dropdown .option {
+            padding: 8px 14px !important;
+            font-size: 0.9rem !important;
+        }
+        .ts-dropdown .option.active, .ts-dropdown .option:hover {
+            background-color: #0284c7 !important;
+            color: #ffffff !important;
+        }
+        .ts-dropdown .option.selected {
+            background-color: #e0f2fe !important;
+            color: #0369a1 !important;
+            font-weight: 600 !important;
+        }
+
+        /* Form Validation & Error Highlighting */
+        .is-invalid,
+        .was-validated .form-control:invalid,
+        .was-validated .form-select:invalid {
+            border: 2px solid #ef4444 !important;
+            background-color: #fef2f2 !important;
+            box-shadow: 0 0 0 0.25rem rgba(239, 68, 68, 0.25) !important;
+        }
+        .ts-wrapper.is-invalid .ts-control {
+            border: 2px solid #ef4444 !important;
+            background-color: #fef2f2 !important;
+            box-shadow: 0 0 0 0.25rem rgba(239, 68, 68, 0.25) !important;
+        }
+        .field-error-hint {
+            color: #b91c1c !important;
+            font-size: 0.82rem !important;
+            font-weight: 700 !important;
+            margin-top: 0.35rem !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            background: #fee2e2 !important;
+            border: 1px solid #fca5a5 !important;
+            padding: 4px 10px !important;
+            border-radius: 6px !important;
+            animation: fadeInError 0.2s ease-out;
+        }
+        @keyframes fadeInError {
+            from { opacity: 0; transform: translateY(-3px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Custom Modern Scrollbar */
@@ -374,22 +453,79 @@
             }
         }
 
+        /* Professional Hospital Print & PDF Engine */
         @media print {
-            .sidebar, .top-navbar, .no-print, .btn, footer {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 14mm 12mm 14mm;
+            }
+            *,
+            *::before,
+            *::after {
+                box-shadow: none !important;
+                -webkit-box-shadow: none !important;
+                text-shadow: none !important;
+                filter: none !important;
+            }
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                font-size: 10pt !important;
+                line-height: 1.45 !important;
+            }
+            .sidebar, .top-navbar, .no-print, .btn, footer, #topProgressBar, #globalMessageContainer {
                 display: none !important;
             }
             .main-content {
-                margin-left: 0 !important;
+                margin: 0 !important;
                 padding: 0 !important;
+                background: transparent !important;
             }
             .content-body {
                 padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
             }
+            .rx-paper, .invoice-paper, .report-paper, .thermal-receipt {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+            }
+            .page-break-inside-avoid {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+        }
+        /* Sleek Top Progress Bar for HTMX SPA Navigation */
+        #topProgressBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, #38bdf8, #0284c7, #2563eb);
+            z-index: 9999999;
+            transition: width 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.7);
+            pointer-events: none;
+        }
+        .htmx-request #topProgressBar,
+        body.htmx-request #topProgressBar {
+            opacity: 1;
+            width: 75%;
+            transition: width 1.2s cubic-bezier(0.1, 0.8, 0.2, 1), opacity 0.2s ease;
         }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-boost="true">
+    <!-- Top Progress Bar for Instant Dynamic HTMX Navigation -->
+    <div id="topProgressBar"></div>
 
 
     <!-- Sidebar with Smooth Scroll & Clean English Navigation -->
@@ -437,7 +573,7 @@
 
                 {% if request.user.is_admin or request.user.is_doctor %}
                 <li>
-                    <a href="{% url 'doctor_list' %}" class="{% if 'doctor' in request.resolver_match.url_name %}active{% endif %}">
+                    <a href="{% url 'doctor_list' %}" class="{% if 'doctor' in request.resolver_match.url_name or 'prescription' in request.resolver_match.url_name %}active{% endif %}">
                         <i class="bi bi-person-badge-fill"></i> Doctors & Prescriptions
                     </a>
                 </li>
@@ -572,18 +708,41 @@
             </div>
         </header>
 
-        <!-- Flash Messages -->
-        {% if messages %}
-        <div class="px-4 pt-3 no-print">
+        <!-- Global Notification & Flash Messages -->
+        <div class="px-4 pt-3 no-print" id="globalMessageContainer">
+            {% if messages %}
             {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 rounded-3" role="alert">
-                <i class="bi bi-info-circle-fill"></i>
-                <div>{{ message }}</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show shadow-sm border-0 d-flex align-items-start gap-3 rounded-3 p-3 mb-3" role="alert">
+                <div class="fs-4 lh-1 mt-1">
+                    {% if message.tags == 'error' %}
+                    <i class="bi bi-exclamation-octagon-fill text-danger"></i>
+                    {% elif message.tags == 'warning' %}
+                    <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                    {% elif message.tags == 'success' %}
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    {% else %}
+                    <i class="bi bi-info-circle-fill text-primary"></i>
+                    {% endif %}
+                </div>
+                <div class="flex-grow-1">
+                    <strong class="d-block mb-1">
+                        {% if message.tags == 'error' %}
+                        Error / ত্রুটি:
+                        {% elif message.tags == 'warning' %}
+                        Notice / সতর্কতা:
+                        {% elif message.tags == 'success' %}
+                        Success / সফল হয়েছে:
+                        {% else %}
+                        Information / তথ্য:
+                        {% endif %}
+                    </strong>
+                    <div style="white-space: pre-line;">{{ message }}</div>
+                </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
             {% endfor %}
+            {% endif %}
         </div>
-        {% endif %}
 
         <!-- Content Body -->
         <main class="content-body">
@@ -612,6 +771,8 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Tom Select JS for Searchable Select Dropdowns -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
     <script>
         // Clean any leftover Google Translate cookies or injected frames
@@ -643,9 +804,176 @@
             sb.classList.toggle('show');
         }
 
-        // Preserve sidebar scroll position on page load
+        // Global Searchable Dropdown Initializer (Tom Select)
+        function initSearchableSelects(container = document) {
+            // Add novalidate to all forms to allow our custom validator to handle focusable & hidden selects seamlessly
+            container.querySelectorAll('form').forEach(f => f.setAttribute('novalidate', 'true'));
+
+            container.querySelectorAll('select:not(.no-search):not(.tomselected)').forEach(function(select) {
+                try {
+                    const isRequired = select.hasAttribute('required') || select.dataset.required === 'true';
+                    if (isRequired) {
+                        select.dataset.required = "true";
+                        select.removeAttribute('required');
+                    }
+
+                    const ts = new TomSelect(select, {
+                        create: false,
+                        placeholder: select.getAttribute('placeholder') || '-- Search & select --',
+                        allowEmptyOption: true,
+                        maxOptions: 500,
+                        plugins: ['clear_button'],
+                        controlInput: '<input>',
+                        dropdownParent: 'body',
+                    });
+
+                    // Clear error immediately on selection
+                    ts.on('change', function(val) {
+                        if (val && val !== '') {
+                            ts.wrapper.classList.remove('is-invalid');
+                            const parent = ts.wrapper.parentNode;
+                            const hint = parent ? parent.querySelector('.field-error-hint') : null;
+                            if (hint) hint.remove();
+                        }
+                    });
+                } catch(err) {
+                    // Ignore if already initialized
+                }
+            });
+        }
+
+        // Universal Form Validation & Real-time Error Engine
+        function validateHospitalForm(form, e) {
+            if (!form || form.tagName !== 'FORM') return true;
+            if (form.classList.contains('no-validate')) return true;
+
+            let firstInvalidEl = null;
+            let hasError = false;
+
+            // Remove previous inline error hints in this form
+            form.querySelectorAll('.field-error-hint').forEach(el => el.remove());
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+            const requiredElements = form.querySelectorAll('input[required], select[required], textarea[required], [data-required="true"]');
+            
+            requiredElements.forEach(function (field) {
+                let isFieldEmpty = false;
+                const fieldName = field.getAttribute('name') || '';
+
+                if (field.type === 'radio' || field.type === 'checkbox') {
+                    const checked = form.querySelector(`input[name="${fieldName}"]:checked`);
+                    if (!checked) isFieldEmpty = true;
+                } else {
+                    let val = '';
+                    if (field.tomselect) {
+                        val = field.tomselect.getValue();
+                    } else {
+                        val = (field.value !== undefined && field.value !== null) ? field.value.toString().trim() : '';
+                    }
+                    if (!val || val === '') {
+                        isFieldEmpty = true;
+                    }
+                }
+
+                if (isFieldEmpty) {
+                    hasError = true;
+                    if (!firstInvalidEl) firstInvalidEl = field;
+
+                    // Handle TomSelect wrapper if applicable
+                    if (field.tomselect) {
+                        const tsWrapper = field.tomselect.wrapper;
+                        if (tsWrapper) {
+                            tsWrapper.classList.add('is-invalid');
+                            const hint = document.createElement('div');
+                            hint.className = 'field-error-hint';
+                            hint.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> এই ড্রপডাউন থেকে নির্বাচন করা আবশ্যক (Required)';
+                            tsWrapper.parentNode.appendChild(hint);
+                        }
+                    } else {
+                        field.classList.add('is-invalid');
+                        const hint = document.createElement('div');
+                        hint.className = 'field-error-hint';
+                        hint.innerHTML = '<i class="bi bi-exclamation-octagon-fill"></i> এই ঘরটি পূরণ করা আবশ্যক (Required)';
+                        field.parentNode.appendChild(hint);
+
+                        const clearFn = function () {
+                            if (field.value && field.value.trim() !== '') {
+                                field.classList.remove('is-invalid');
+                                hint.remove();
+                                field.removeEventListener('input', clearFn);
+                                field.removeEventListener('change', clearFn);
+                            }
+                        };
+                        field.addEventListener('input', clearFn);
+                        field.addEventListener('change', clearFn);
+                    }
+                }
+            });
+
+            if (hasError) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    e.stopPropagation();
+                }
+
+                // Show top banner alert
+                const msgContainer = document.getElementById('globalMessageContainer');
+                if (msgContainer) {
+                    msgContainer.innerHTML = `
+                        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 d-flex align-items-start gap-3 rounded-3 p-3 mb-3" role="alert">
+                            <div class="fs-4 lh-1 mt-1 text-danger">
+                                <i class="bi bi-exclamation-octagon-fill"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <strong class="d-block mb-1 text-danger fs-6">ফর্ম পূরণে ত্রুটি (Required Fields Missing)</strong>
+                                <div>অনুগ্রহ করে লাল চিহ্নিত প্রয়োজনীয় ঘরগুলো নির্বাচন/পূরণ করুন। (Please fill or select all required fields highlighted in red).</div>
+                            </div>
+                            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                        </div>
+                    `;
+                    msgContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+
+                if (firstInvalidEl) {
+                    setTimeout(function() {
+                        if (firstInvalidEl.tomselect) {
+                            firstInvalidEl.tomselect.focus();
+                            firstInvalidEl.tomselect.wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                            firstInvalidEl.focus();
+                            firstInvalidEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 50);
+                }
+                return false;
+            }
+            return true;
+        }
+
+        // Intercept Submit Events Globally
+        document.addEventListener('submit', function (e) {
+            validateHospitalForm(e.target, e);
+        }, true);
+
+        // Also intercept direct Submit button clicks
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('button[type="submit"], input[type="submit"]');
+            if (btn) {
+                const form = btn.closest('form');
+                if (form) {
+                    if (!validateHospitalForm(form, e)) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                    }
+                }
+            }
+        }, true);
+
+        // Preserve sidebar scroll position and init components on page load
         document.addEventListener('DOMContentLoaded', function () {
-            // Restore Sidebar scroll position
+            // Initialize all searchable dropdowns
+            initSearchableSelects();
 
             // Restore Sidebar scroll position
             const wrapper = document.getElementById('sidebarMenuWrapper');
@@ -678,6 +1006,51 @@
                     e.preventDefault();
                 });
             });
+        });
+
+        // Sleek Progress Bar for HTMX requests
+        const topBar = document.getElementById('topProgressBar');
+        document.addEventListener('htmx:beforeRequest', function() {
+            if (topBar) {
+                topBar.style.opacity = '1';
+                topBar.style.width = '20%';
+                setTimeout(function() {
+                    if (topBar.style.opacity === '1') {
+                        topBar.style.width = '70%';
+                    }
+                }, 150);
+            }
+        });
+
+        document.addEventListener('htmx:afterOnLoad', function() {
+            if (topBar) {
+                topBar.style.width = '100%';
+                setTimeout(function() {
+                    topBar.style.opacity = '0';
+                    setTimeout(function() {
+                        topBar.style.width = '0%';
+                    }, 250);
+                }, 200);
+            }
+        });
+
+        document.addEventListener('htmx:requestError', function() {
+            if (topBar) {
+                topBar.style.backgroundColor = '#ef4444';
+                topBar.style.width = '100%';
+                setTimeout(function() {
+                    topBar.style.opacity = '0';
+                    setTimeout(function() {
+                        topBar.style.width = '0%';
+                        topBar.style.background = 'linear-gradient(90deg, #38bdf8, #0284c7, #2563eb)';
+                    }, 250);
+                }, 400);
+            }
+        });
+
+        // Re-initialize searchable dropdowns when HTMX swaps content
+        document.addEventListener('htmx:afterSwap', function (e) {
+            initSearchableSelects(e.detail.target);
         });
     </script>
     {% block extra_scripts %}{% endblock %}

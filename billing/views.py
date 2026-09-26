@@ -50,7 +50,7 @@ def invoice_list(request):
         'total_due': total_due,
     }
 
-    if request.htmx:
+    if request.htmx and not getattr(request.htmx, 'boosted', False) and request.headers.get('HX-Boosted') != 'true':
         return render(request, 'billing/partials/invoice_table.html', context)
 
     return render(request, 'billing/invoice_list.html', context)
@@ -71,11 +71,18 @@ def invoice_create(request):
         unit_prices = request.POST.getlist('item_price[]')
         item_types = request.POST.getlist('item_type[]')
 
+        if not patient_id:
+            messages.error(request, "রোগী (Patient) নির্বাচন করা আবশ্যক!")
+            return redirect('invoice_create')
+
         if not descriptions:
             messages.error(request, "Please add at least one line item to the bill!")
             return redirect('invoice_create')
 
-        patient = get_object_or_404(Patient, pk=patient_id)
+        patient = Patient.objects.filter(pk=patient_id).first()
+        if not patient:
+            messages.error(request, "নির্বাচিত রোগী ডাটাবেজে পাওয়া যায়নি।")
+            return redirect('invoice_create')
 
         total_sum = Decimal('0.00')
         items_data = []
@@ -207,7 +214,7 @@ def expense_list(request):
         'total_expense_amount': total_expense_amount,
     }
 
-    if request.htmx:
+    if request.htmx and not getattr(request.htmx, 'boosted', False) and request.headers.get('HX-Boosted') != 'true':
         return render(request, 'billing/partials/expense_table.html', context)
 
     return render(request, 'billing/expense_list.html', context)
@@ -216,15 +223,34 @@ def expense_list(request):
 def expense_create(request):
     if request.method == 'POST':
         cat_id = request.POST.get('category')
-        title = request.POST.get('title')
+        title = request.POST.get('title', '').strip()
         amount = Decimal(request.POST.get('amount') or '0.00')
         exp_date = request.POST.get('expense_date', timezone.now().strftime('%Y-%m-%d'))
         pay_method = request.POST.get('payment_method', 'Cash')
-        paid_to = request.POST.get('paid_to', '')
+        paid_to = request.POST.get('paid_to', '').strip()
         voucher = request.FILES.get('voucher_receipt')
-        remarks = request.POST.get('remarks', '')
+        remarks = request.POST.get('remarks', '').strip()
 
-        category = get_object_or_404(ExpenseCategory, pk=cat_id)
+        errors = []
+        if not cat_id:
+            errors.append("খরচের ক্যাটাগরি (Expense Category) নির্বাচন করা আবশ্যক।")
+        if not title:
+            errors.append("খরচের বিবরণ / টাইটেল দেওয়া আবশ্যক।")
+        if amount <= Decimal('0.00'):
+            errors.append("খরচের পরিমাণ (Amount) ০ এর বেশি হতে হবে।")
+
+        category = ExpenseCategory.objects.filter(pk=cat_id).first() if cat_id else None
+        if not category and cat_id:
+            errors.append("নির্বাচিত ক্যাটাগরি ডাটাবেজে পাওয়া যায়নি।")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            categories = ExpenseCategory.objects.all()
+            return render(request, 'billing/expense_form.html', {
+                'categories': categories,
+                'today': exp_date or timezone.now().strftime('%Y-%m-%d'),
+            })
 
         exp = Expense.objects.create(
             category=category,

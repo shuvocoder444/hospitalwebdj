@@ -19,14 +19,14 @@ class GenericName(models.Model):
         return self.name
 
 class Medicine(models.Model):
-    brand_name = models.CharField(max_length=150, help_text="e.g. Napa Extra, Maxpro, Seclo, Zithrox")
+    brand_name = models.CharField(max_length=150, db_index=True, help_text="e.g. Napa Extra, Maxpro, Seclo, Zithrox")
     generic = models.ForeignKey(GenericName, on_delete=models.SET_NULL, null=True, related_name='medicines')
     category = models.ForeignKey(MedicineCategory, on_delete=models.SET_NULL, null=True, related_name='medicines')
     strength = models.CharField(max_length=50, blank=True, null=True, help_text="e.g. 500mg, 20mg, 1gm, 5ml/100ml")
-    company_name = models.CharField(max_length=150, help_text="e.g. Square Pharmaceuticals, Beximco, Incepta, Renata")
+    company_name = models.CharField(max_length=150, db_index=True, help_text="e.g. Square Pharmaceuticals, Beximco, Incepta, Renata")
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="MRP per piece/strip/bottle")
     reorder_level = models.PositiveIntegerField(default=50, help_text="Alert when total stock falls below this quantity")
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
 
     @property
     def total_stock(self):

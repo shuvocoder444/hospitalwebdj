@@ -34,7 +34,7 @@ def lab_orders_list(request):
         'query': query,
     }
 
-    if request.htmx:
+    if request.htmx and not getattr(request.htmx, 'boosted', False) and request.headers.get('HX-Boosted') != 'true':
         return render(request, 'diagnostics/partials/lab_order_table.html', context)
 
     return render(request, 'diagnostics/lab_orders_list.html', context)
@@ -49,13 +49,19 @@ def lab_order_create(request):
         paid_amount = Decimal(request.POST.get('paid_amount') or '0.00')
         payment_method = request.POST.get('payment_method', 'Cash')
 
-        test_ids = request.POST.getlist('tests[]')
-
-        if not test_ids:
-            messages.error(request, "Please select at least one lab test!")
+        if not patient_id:
+            messages.error(request, "রোগী (Patient) নির্বাচন করা আবশ্যক!")
             return redirect('lab_order_create')
 
-        patient = get_object_or_404(Patient, pk=patient_id)
+        if not test_ids:
+            messages.error(request, "অন্তত একটি ল্যাব টেস্ট নির্বাচন করুন (Please select at least one lab test)!")
+            return redirect('lab_order_create')
+
+        patient = Patient.objects.filter(pk=patient_id).first()
+        if not patient:
+            messages.error(request, "নির্বাচিত রোগী ডাটাবেজে পাওয়া যায়নি।")
+            return redirect('lab_order_create')
+            
         doctor = Doctor.objects.filter(pk=doctor_id).first() if doctor_id else None
 
         # Fetch selected tests with parameters pre-loaded to prevent N+1

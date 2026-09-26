@@ -35,9 +35,29 @@ def admission_create(request):
         deposit = Decimal(request.POST.get('initial_deposit') or '0.00')
         reason = request.POST.get('reason_for_admission', '')
 
-        patient = get_object_or_404(Patient, pk=patient_id)
-        bed = get_object_or_404(Bed, pk=bed_id)
-        doctor = get_object_or_404(Doctor, pk=doctor_id)
+        errors = []
+        if not patient_id:
+            errors.append("রোগী (Patient) নির্বাচন করা আবশ্যক।")
+        if not bed_id:
+            errors.append("বেড/কেবিন (Bed) নির্বাচন করা আবশ্যক।")
+        if not doctor_id:
+            errors.append("ডাক্তার (Doctor) নির্বাচন করা আবশ্যক।")
+
+        patient = Patient.objects.filter(pk=patient_id).first() if patient_id else None
+        bed = Bed.objects.filter(pk=bed_id).first() if bed_id else None
+        doctor = Doctor.objects.filter(pk=doctor_id).first() if doctor_id else None
+
+        if not patient and patient_id:
+            errors.append("নির্বাচিত রোগী ডাটাবেজে পাওয়া যায়নি।")
+        if not bed and bed_id:
+            errors.append("নির্বাচিত বেড ডাটাবেজে পাওয়া যায়নি।")
+        if not doctor and doctor_id:
+            errors.append("নির্বাচিত ডাক্তার ডাটাবেজে পাওয়া যায়নি।")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return redirect('admission_create')
 
         if bed.status != 'Available':
             messages.error(request, f"Bed {bed.bed_number} is currently not available!")

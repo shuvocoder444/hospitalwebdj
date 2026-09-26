@@ -1,155 +1,569 @@
 {% extends 'base.html' %}
-{% block title %}Write Digital Prescription{% endblock %}
+{% block title %}Smart Digital Prescription Studio - WebKoders ERP{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- Page Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-        <h4 class="fw-bold mb-1"><i class="bi bi-file-earmark-medical-fill text-primary me-2"></i>Create Digital Prescription</h4>
-        <p class="text-muted mb-0">Record clinical findings, investigation tests, and Rx medicine dosages</p>
+        <h4 class="fw-bold mb-1 text-dark">
+            <i class="bi bi-file-earmark-medical-fill text-primary me-2"></i>Smart Digital Prescription Studio
+        </h4>
+        <p class="text-muted mb-0">Fast 1-click clinical notes, autocomplete medicines, dosage chips, and Rx printing</p>
     </div>
-    <a href="{% url 'doctor_list' %}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back to Doctors
-    </a>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'doctor_list' %}" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold">
+            <i class="bi bi-arrow-left me-1"></i> Doctors Directory
+        </a>
+    </div>
 </div>
 
-<div class="card card-custom">
-    <div class="card-body p-4">
-        <form method="POST" id="prescriptionForm">
-            {% csrf_token %}
-            <!-- Top Patient & Doctor Selection -->
-            <div class="row g-3 mb-4 bg-light p-3 rounded-3">
+<form method="POST" id="prescriptionForm">
+    {% csrf_token %}
+
+    <!-- Top Bar: Quick Disease Presets & Patient Selection -->
+    <div class="card card-custom border shadow-xs rounded-4 mb-4 overflow-hidden">
+        <div class="card-header bg-light border-bottom p-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white px-2 py-1 rounded-pill">
+                        <i class="bi bi-lightning-charge-fill me-1"></i> 1-Click Fast Presets:
+                    </span>
+                    <span class="small text-muted d-none d-sm-inline">Click to auto-populate full Rx:</span>
+                </div>
+                <div class="d-flex flex-wrap gap-1">
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold" onclick="applyRxPreset('fever')">
+                        🤒 Fever & Body Ache
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold" onclick="applyRxPreset('gastric')">
+                        🔥 Gastric & Acidity
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold" onclick="applyRxPreset('cold')">
+                        🤧 Cough & Cold
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold" onclick="applyRxPreset('htn')">
+                        ❤️ High BP / HTN
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold" onclick="applyRxPreset('diabetes')">
+                        🩸 Diabetes / T2D
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-3 bg-white">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Patient <span class="text-danger">*</span></label>
-                    <select name="patient" class="form-select" required>
-                        <option value="">-- Choose Patient --</option>
+                    <label class="form-label small fw-bold text-dark mb-1">Select Patient <span class="text-danger">*</span></label>
+                    <select name="patient" id="patientSelect" class="form-select form-select-lg fs-6 rounded-3 border" required>
+                        <option value="">-- Choose Registered Patient --</option>
                         {% for p in patients %}
-                        <option value="{{ p.id }}" {% if pre_pat_id == p.id|stringformat:"i" %}selected{% endif %}>
-                            {{ p.name }} ({{ p.phone }}) - ID: {{ p.patient_id }} [{{ p.gender }}, {{ p.age_years }}y]
+                        <option value="{{ p.id }}" {% if pre_pat_id == p.id|stringformat:"i" or pre_pat_id == p.id|stringformat:"s" %}selected{% endif %}>
+                            {{ p.name }} ({{ p.phone }}) — ID: {{ p.patient_id }} [{{ p.gender }}, {{ p.age_years }}y]
                         </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Doctor <span class="text-danger">*</span></label>
-                    <select name="doctor" class="form-select" required>
+                    <label class="form-label small fw-bold text-dark mb-1">Consulting Doctor / Specialist <span class="text-danger">*</span></label>
+                    <select name="doctor" id="doctorSelect" class="form-select form-select-lg fs-6 rounded-3 border" required>
                         <option value="">-- Choose Consulting Doctor --</option>
                         {% for doc in doctors %}
-                        <option value="{{ doc.id }}" {% if pre_doc_id == doc.id|stringformat:"i" %}selected{% endif %}>
-                            Dr. {{ doc.name }} ({{ doc.specialization.name }})
+                        <option value="{{ doc.id }}" {% if pre_doc_id == doc.id|stringformat:"i" or pre_doc_id == doc.id|stringformat:"s" %}selected{% endif %}>
+                            Dr. {{ doc.name }} ({{ doc.specialization.name|default:"General" }}) — {{ doc.degrees }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="row g-4">
-                <!-- Left Column: Complaints & Examination -->
-                <div class="col-lg-5">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Chief Complaints (C/C)</label>
-                        <textarea name="chief_complaints" class="form-control" rows="3" placeholder="e.g. Fever x 3 days, cough, headache..."></textarea>
+    <!-- Main 2-Column Workspace -->
+    <div class="row g-4 mb-4">
+        <!-- LEFT COLUMN: Clinical Assessment & Investigation -->
+        <div class="col-lg-5">
+            <div class="card card-custom border shadow-xs rounded-4 h-100">
+                <div class="card-header bg-white border-bottom p-3">
+                    <span class="fw-bold text-dark"><i class="bi bi-clipboard2-pulse text-primary me-2"></i>Clinical Assessment & Tests</span>
+                </div>
+                <div class="card-body p-3 d-flex flex-column gap-3">
+                    
+                    <!-- Chief Complaints (C/C) -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold text-dark mb-0">Chief Complaints (C/C)</label>
+                            <small class="text-muted">Tap quick tags:</small>
+                        </div>
+                        <textarea name="chief_complaints" id="chiefComplaintsInput" class="form-control mb-1 rounded-3" rows="2" placeholder="e.g. Fever x 3 days, dry cough..."></textarea>
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="badge-chip" onclick="appendTag('chiefComplaintsInput', 'Fever x 3 days')">+ Fever</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('chiefComplaintsInput', 'Dry cough')">+ Cough</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('chiefComplaintsInput', 'Severe headache')">+ Headache</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('chiefComplaintsInput', 'Chest pain')">+ Chest Pain</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('chiefComplaintsInput', 'Abdominal pain')">+ Abdominal Pain</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('chiefComplaintsInput', 'General weakness')">+ Weakness</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('chiefComplaintsInput', 'Vomiting / Nausea')">+ Vomiting</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('chiefComplaintsInput', 'Loose motion')">+ Diarrhea</button>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">On Examination (O/E) & History</label>
-                        <textarea name="history_and_findings" class="form-control" rows="3" placeholder="e.g. BP: 120/80 mmHg, Pulse: 78 bpm, Temp: 101°F..."></textarea>
+                    <!-- On Examination (O/E) -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold text-dark mb-0">On Examination (O/E) & Vitals</label>
+                            <small class="text-muted">Tap quick vitals:</small>
+                        </div>
+                        <textarea name="history_and_findings" id="findingsInput" class="form-control mb-1 rounded-3" rows="2" placeholder="BP, Pulse, Temp, Weight, Anaemia..."></textarea>
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="badge-chip" onclick="appendTag('findingsInput', 'BP: 120/80 mmHg')">+ BP 120/80</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('findingsInput', 'Pulse: 76 bpm')">+ Pulse 76</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('findingsInput', 'Temp: 101°F')">+ Temp 101°F</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('findingsInput', 'SpO2: 98%')">+ SpO2 98%</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('findingsInput', 'Anaemia: Nil, Oedema: Nil')">+ No Anaemia/Oedema</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('findingsInput', 'Lungs: Clear, Heart: S1+S2 heard')">+ Lungs Clear</button>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Diagnosis (Dx)</label>
-                        <input type="text" name="diagnosis" class="form-control" placeholder="e.g. Upper Respiratory Tract Infection (URTI)">
+                    <!-- Diagnosis (Dx) -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold text-dark mb-0">Diagnosis (Dx)</label>
+                            <small class="text-muted">Tap quick Dx:</small>
+                        </div>
+                        <input type="text" name="diagnosis" id="diagnosisInput" class="form-control mb-1 rounded-3" placeholder="e.g. Acute Viral Fever, Gastritis, URTI">
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="badge-chip" onclick="setDiagnosis('Viral Fever / Pyrexia of Unknown Origin')">Viral Fever</button>
+                            <button type="button" class="badge-chip" onclick="setDiagnosis('Acute Gastritis / GERD')">Gastritis</button>
+                            <button type="button" class="badge-chip" onclick="setDiagnosis('Upper Respiratory Tract Infection (URTI)')">URTI</button>
+                            <button type="button" class="badge-chip" onclick="setDiagnosis('Essential Hypertension')">Hypertension</button>
+                            <button type="button" class="badge-chip" onclick="setDiagnosis('Type-2 Diabetes Mellitus')">Diabetes</button>
+                            <button type="button" class="badge-chip" onclick="setDiagnosis('Urinary Tract Infection (UTI)')">UTI</button>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Tests Advised (Investigations)</label>
-                        <textarea name="tests_advised" class="form-control" rows="3" placeholder="e.g. CBC with ESR, Dengue NS1, RBS..."></textarea>
+                    <!-- Tests Advised (Investigations) -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold text-dark mb-0">Tests Advised (Investigations)</label>
+                            <small class="text-muted">Tap quick tests:</small>
+                        </div>
+                        <textarea name="tests_advised" id="testsAdvisedInput" class="form-control mb-1 rounded-3" rows="2" placeholder="e.g. CBC with ESR, RBS, Serum Creatinine..."></textarea>
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'CBC with ESR')">+ CBC</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'RBS (Random Blood Sugar)')">+ RBS</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'Serum Creatinine')">+ S. Creatinine</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'Urine R/M/E')">+ Urine R/E</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'ECG 12 Lead')">+ ECG</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'USG of Whole Abdomen')">+ USG Abdomen</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'Chest X-Ray P/A view')">+ Chest X-Ray</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'Lipid Profile')">+ Lipid Profile</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'SGPT (ALT)')">+ SGPT</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'Dengue NS1 Antigen')">+ Dengue NS1</button>
+                            <button type="button" class="badge-chip" onclick="appendTag('testsAdvisedInput', 'Serum Electrolytes')">+ Electrolytes</button>
+                        </div>
                     </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Rx Prescribed Medicines & Dosages -->
+        <div class="col-lg-7">
+            <div class="card card-custom border shadow-xs rounded-4 h-100">
+                <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-bold text-dark fs-5"><i class="bi bi-capsule-pill text-primary me-2"></i>Rx — Prescribed Medicines</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" onclick="addMedicineRow()">
+                        <i class="bi bi-plus-lg me-1"></i> Add Another Medicine
+                    </button>
                 </div>
 
-                <!-- Right Column: Rx Medicines & Advice -->
-                <div class="col-lg-7">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold fs-5 text-primary mb-0"><i class="bi bi-capsule me-1"></i> Rx - Prescribed Medicines</label>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="addMedBtn">
-                            <i class="bi bi-plus-lg me-1"></i> Add Medicine
-                        </button>
-                    </div>
+                <div class="card-body p-3">
+                    <div id="medicinesContainer" class="d-flex flex-column gap-3">
+                        <!-- Medicine Row 1 (Template) -->
+                        <div class="medicine-item border rounded-3 p-3 bg-light shadow-xs position-relative">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-primary px-2 py-1 med-index-badge">Medicine #1</span>
+                                <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-2 rounded-circle" onclick="removeMedicineRow(this)" title="Delete Medicine">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
 
-                    <div id="medicinesContainer">
-                        <!-- Medicine Row 1 -->
-                        <div class="medicine-row border rounded p-3 mb-2 bg-light">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">Brand Name & Strength</label>
+                                    <input type="text" 
+                                           name="med_name[]" 
+                                           class="form-control form-control-sm border rounded-2 px-2" 
+                                           placeholder="e.g. Tab. Napa Extra 500mg" 
+                                           list="rxMedicineList" 
+                                           required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">Dosage Frequency</label>
+                                    <input type="text" 
+                                           name="dosage[]" 
+                                           class="form-control form-control-sm border rounded-2 px-2 dosage-input" 
+                                           placeholder="1+0+1" 
+                                           value="1+0+1">
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '1+0+1')">1+0+1</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '1+1+1')">1+1+1</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '0+0+1')">0+0+1</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '1+0+0')">1+0+0</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '1+1+1+1')">1+1+1+1</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', 'SOS (প্রয়োজনে)')">SOS</button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="row g-2">
-                                <div class="col-md-5">
-                                    <label class="form-label small fw-semibold text-muted">Brand / Medicine Name</label>
-                                    <input type="text" name="med_name[]" class="form-control form-control-sm" placeholder="e.g. Tab. Napa Extra 500mg" required>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">Duration</label>
+                                    <input type="text" 
+                                           name="duration[]" 
+                                           class="form-control form-control-sm border rounded-2 px-2 duration-input" 
+                                           placeholder="7 days" 
+                                           value="7 days">
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '3 days')">3d</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '5 days')">5d</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '7 days')">7d</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '10 days')">10d</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '14 days')">14d</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '1 month')">1m</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', 'Continue (চলবে)')">Continue</button>
+                                    </div>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label small fw-semibold text-muted">Dosage</label>
-                                    <input type="text" name="dosage[]" class="form-control form-control-sm" placeholder="1+0+1" value="1+0+1">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label small fw-semibold text-muted">Duration</label>
-                                    <input type="text" name="duration[]" class="form-control form-control-sm" placeholder="5 days" value="5 days">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small fw-semibold text-muted">Instruction</label>
-                                    <input type="text" name="instruction[]" class="form-control form-control-sm" placeholder="After meal" value="After meal">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">Instruction / Timing</label>
+                                    <input type="text" 
+                                           name="instruction[]" 
+                                           class="form-control form-control-sm border rounded-2 px-2 instruction-input" 
+                                           placeholder="After meal" 
+                                           value="After meal">
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.instruction-input', 'After meal (খাবারের পর)')">খাবারের পর</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.instruction-input', 'Before meal (খাবারের আগে)')">খাবারের আগে</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.instruction-input', 'Empty stomach (খালি পেটে)')">খালি পেটে</button>
+                                        <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.instruction-input', 'At bedtime (ঘুমানোর আগে)')">ঘুমানোর আগে</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4">
-                        <label class="form-label fw-semibold">General Advice & Lifestyle</label>
-                        <textarea name="advice" class="form-control" rows="3" placeholder="e.g. Drink plenty of boiled water, avoid oily food, complete bed rest..."></textarea>
+                    <!-- Bottom Advice & Follow Up -->
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-bold text-dark mb-0">Special Advice / Lifestyle Guidelines</label>
+                                <small class="text-muted">Tap quick advice:</small>
+                            </div>
+                            <textarea name="advice" id="adviceInput" class="form-control rounded-3 mb-1" rows="2" placeholder="Dietary restrictions, rest, lifestyle suggestions..."></textarea>
+                            <div class="d-flex flex-wrap gap-1">
+                                <button type="button" class="badge-chip" onclick="appendTag('adviceInput', 'পর্যাপ্ত পানি ও বিশ্রাম নিন')">+ পানি ও বিশ্রাম</button>
+                                <button type="button" class="badge-chip" onclick="appendTag('adviceInput', 'তৈলাক্ত ও ভাজাপোড়া খাবার পরিহার করুন')">+ তৈলাক্ত খাবার নিষেধ</button>
+                                <button type="button" class="badge-chip" onclick="appendTag('adviceInput', 'ধূমপান ও তামাক বর্জন করুন')">+ ধূমপান নিষেধ</button>
+                                <button type="button" class="badge-chip" onclick="appendTag('adviceInput', 'প্রতিদিন ৩০ মিনিট নিয়মিত হাঁটুন')">+ নিয়মিত হাঁটা</button>
+                                <button type="button" class="badge-chip" onclick="appendTag('adviceInput', 'সমস্যা বাড়লে হাসপাতালে জরুরি যোগাযোগ করুন')">+ জরুরি যোগাযোগ</button>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-dark mb-1">Next Follow-up Date</label>
+                                <input type="date" name="follow_up_date" id="followUpDateInput" class="form-control form-control-sm rounded-2">
+                            </div>
+                            <div class="col-md-6 pt-md-3">
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="badge-sub-chip" onclick="setFollowUpDays(7)">+7 Days</button>
+                                    <button type="button" class="badge-sub-chip" onclick="setFollowUpDays(14)">+14 Days</button>
+                                    <button type="button" class="badge-sub-chip" onclick="setFollowUpDays(30)">+1 Month</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mt-3">
-                        <label class="form-label fw-semibold">Follow-Up Date (Next Visit)</label>
-                        <input type="date" name="follow_up_date" class="form-control">
-                    </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
-                <a href="{% url 'doctor_list' %}" class="btn btn-light border px-4">Cancel</a>
-                <button type="submit" class="btn btn-success px-5 fw-semibold shadow-sm">
-                    <i class="bi bi-printer me-1"></i> Save & Generate Prescription
+    <!-- Floating / Sticky Footer Save Bar -->
+    <div class="card card-custom border shadow-sm rounded-4 p-3 bg-white sticky-bottom">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+            <div class="text-muted small">
+                <i class="bi bi-info-circle text-primary me-1"></i> Saving will generate a high-resolution printable prescription formatted with doctor header.
+            </div>
+            <div class="d-flex gap-2">
+                <button type="reset" class="btn btn-light border rounded-pill px-4 fw-semibold" onclick="resetForm()">
+                    Clear Form
+                </button>
+                <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm d-flex align-items-center gap-2">
+                    <i class="bi bi-printer-fill"></i>
+                    <span>Save & Generate Prescription</span>
                 </button>
             </div>
-        </form>
+        </div>
     </div>
-</div>
-{% endblock %}
+</form>
 
-{% block extra_scripts %}
+<!-- Autocomplete Medicine Datalist -->
+<datalist id="rxMedicineList">
+    {% for m in medicines_catalog %}
+        <option value="{{ m.category.name|default:'Tab' }}. {{ m.brand_name }} {{ m.strength|default:'' }}">Generic: {{ m.generic.name|default:'N/A' }} ({{ m.company_name }})</option>
+    {% endfor %}
+    <!-- Default Top Common Medicines Fallbacks -->
+    <option value="Tab. Napa Extra 500mg+65mg">Beximco (Paracetamol+Caffeine)</option>
+    <option value="Tab. Ace Plus 500mg+65mg">Square (Paracetamol+Caffeine)</option>
+    <option value="Cap. Maxpro 20mg">Square (Esomeprazole)</option>
+    <option value="Cap. Maxpro 40mg">Square (Esomeprazole)</option>
+    <option value="Cap. Seclo 20mg">Square (Omeprazole)</option>
+    <option value="Cap. Sergel 20mg">Healthcare (Esomeprazole)</option>
+    <option value="Tab. Zithrox 500mg">Square (Azithromycin)</option>
+    <option value="Cap. Cef-3 200mg">Square (Cefixime)</option>
+    <option value="Tab. Fexo 120mg">Square (Fexofenadine)</option>
+    <option value="Tab. Monas 10mg">Acme (Montelukast)</option>
+    <option value="Tab. Ceevit 250mg">Square (Vitamin C)</option>
+    <option value="Tab. Alarid 10mg">Square (Cetirizine)</option>
+    <option value="Tab. Camlosart 5/50mg">Square (Amlodipine+Losartan)</option>
+    <option value="Tab. Metfo 500mg">Square (Metformin)</option>
+    <option value="Syr. Antacid Plus">Square (Magaldrate+Simethicone)</option>
+    <option value="Syr. Tusca">Square (Dextromethorphan)</option>
+</datalist>
+
+<style>
+.badge-chip {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.badge-chip:hover {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+    transform: translateY(-1px);
+}
+.badge-sub-chip {
+    background: #ffffff;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    padding: 1px 7px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.badge-sub-chip:hover {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+}
+</style>
+
 <script>
-    document.getElementById('addMedBtn').addEventListener('click', function() {
-        const container = document.getElementById('medicinesContainer');
-        const div = document.createElement('div');
-        div.className = 'medicine-row border rounded p-3 mb-2 bg-light position-relative';
-        div.innerHTML = `
-            <button type="button" class="btn-close position-absolute top-0 end-0 m-2" onclick="this.closest('.medicine-row').remove()"></button>
-            <div class="row g-2">
-                <div class="col-md-5">
-                    <label class="form-label small fw-semibold text-muted">Brand / Medicine Name</label>
-                    <input type="text" name="med_name[]" class="form-control form-control-sm" placeholder="e.g. Cap. Maxpro 20mg" required>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted">Dosage</label>
-                    <input type="text" name="dosage[]" class="form-control form-control-sm" placeholder="1+0+1" value="1+0+1">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-semibold text-muted">Duration</label>
-                    <input type="text" name="duration[]" class="form-control form-control-sm" placeholder="7 days" value="7 days">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold text-muted">Instruction</label>
-                    <input type="text" name="instruction[]" class="form-control form-control-sm" placeholder="Before meal" value="Before meal">
+function appendTag(textareaId, text) {
+    const el = document.getElementById(textareaId);
+    if (el) {
+        const current = el.value.trim();
+        if (current.length === 0) {
+            el.value = text;
+        } else if (!current.includes(text)) {
+            el.value = current + ", " + text;
+        }
+        el.focus();
+    }
+}
+
+function setDiagnosis(diagText) {
+    const el = document.getElementById('diagnosisInput');
+    if (el) {
+        el.value = diagText;
+        el.focus();
+    }
+}
+
+function setRowVal(btn, selector, val) {
+    const row = btn.closest('.medicine-item');
+    if (row) {
+        const input = row.querySelector(selector);
+        if (input) {
+            input.value = val;
+            input.classList.add('border-primary');
+            setTimeout(() => input.classList.remove('border-primary'), 300);
+        }
+    }
+}
+
+function setFollowUpDays(days) {
+    const dateInput = document.getElementById('followUpDateInput');
+    if (dateInput) {
+        const target = new Date();
+        target.setDate(target.getDate() + days);
+        const yyyy = target.getFullYear();
+        const mm = String(target.getMonth() + 1).padStart(2, '0');
+        const dd = String(target.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+}
+
+function updateMedicineIndices() {
+    const rows = document.querySelectorAll('#medicinesContainer .medicine-item');
+    rows.forEach((row, index) => {
+        const badge = row.querySelector('.med-index-badge');
+        if (badge) {
+            badge.innerText = `Medicine #${index + 1}`;
+        }
+    });
+}
+
+function removeMedicineRow(btn) {
+    const rows = document.querySelectorAll('#medicinesContainer .medicine-item');
+    if (rows.length > 1) {
+        btn.closest('.medicine-item').remove();
+        updateMedicineIndices();
+    } else {
+        alert('Prescription must contain at least one medicine entry.');
+    }
+}
+
+function addMedicineRow(medName = '', dosage = '1+0+1', duration = '7 days', instruction = 'After meal') {
+    const container = document.getElementById('medicinesContainer');
+    const index = container.querySelectorAll('.medicine-item').length + 1;
+    
+    const row = document.createElement('div');
+    row.className = 'medicine-item border rounded-3 p-3 bg-light shadow-xs position-relative';
+    row.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge bg-primary px-2 py-1 med-index-badge">Medicine #${index}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-2 rounded-circle" onclick="removeMedicineRow(this)" title="Delete Medicine">
+                <i class="bi bi-trash-fill"></i>
+            </button>
+        </div>
+        <div class="row g-2 mb-2">
+            <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark mb-1">Brand Name & Strength</label>
+                <input type="text" name="med_name[]" class="form-control form-control-sm border rounded-2 px-2" placeholder="e.g. Tab. Napa Extra 500mg" list="rxMedicineList" value="${medName}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark mb-1">Dosage Frequency</label>
+                <input type="text" name="dosage[]" class="form-control form-control-sm border rounded-2 px-2 dosage-input" placeholder="1+0+1" value="${dosage}">
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '1+0+1')">1+0+1</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '1+1+1')">1+1+1</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '0+0+1')">0+0+1</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '1+0+0')">1+0+0</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', '1+1+1+1')">1+1+1+1</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.dosage-input', 'SOS (প্রয়োজনে)')">SOS</button>
                 </div>
             </div>
-        `;
-        container.appendChild(div);
-    });
+        </div>
+        <div class="row g-2">
+            <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark mb-1">Duration</label>
+                <input type="text" name="duration[]" class="form-control form-control-sm border rounded-2 px-2 duration-input" placeholder="7 days" value="${duration}">
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '3 days')">3d</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '5 days')">5d</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '7 days')">7d</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '10 days')">10d</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '14 days')">14d</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', '1 month')">1m</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.duration-input', 'Continue (চলবে)')">Continue</button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-bold text-dark mb-1">Instruction / Timing</label>
+                <input type="text" name="instruction[]" class="form-control form-control-sm border rounded-2 px-2 instruction-input" placeholder="After meal" value="${instruction}">
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.instruction-input', 'After meal (খাবারের পর)')">খাবারের পর</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.instruction-input', 'Before meal (খাবারের আগে)')">খাবারের আগে</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.instruction-input', 'Empty stomach (খালি পেটে)')">খালি পেটে</button>
+                    <button type="button" class="badge-sub-chip" onclick="setRowVal(this, '.instruction-input', 'At bedtime (ঘুমানোর আগে)')">ঘুমানোর আগে</button>
+                </div>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+    updateMedicineIndices();
+}
+
+function clearAllMedicineRows() {
+    const container = document.getElementById('medicinesContainer');
+    container.innerHTML = '';
+}
+
+function applyRxPreset(type) {
+    clearAllMedicineRows();
+
+    if (type === 'fever') {
+        document.getElementById('chiefComplaintsInput').value = "Fever x 3 days, body ache, headache";
+        document.getElementById('findingsInput').value = "Temp: 101°F, Pulse: 84 bpm, BP: 120/80 mmHg";
+        document.getElementById('diagnosisInput').value = "Acute Viral Fever / Pyrexia of Unknown Origin";
+        document.getElementById('testsAdvisedInput').value = "CBC with ESR, Dengue NS1 Antigen, Urine R/M/E";
+        document.getElementById('adviceInput').value = "পর্যাপ্ত পানি ও তরল খাবার খান। সম্পূর্ণ বিশ্রাম নিন। জ্বর বাড়লে ভেজা কাপড় দিয়ে শরীর মুছুন।";
+        setFollowUpDays(5);
+
+        addMedicineRow("Tab. Napa Extra 500mg+65mg", "1+1+1", "5 days", "After meal (খাবারের পর)");
+        addMedicineRow("Cap. Maxpro 20mg", "1+0+1", "7 days", "Before meal (খাবারের আগে)");
+        addMedicineRow("Tab. Ceevit 250mg", "1+0+1", "7 days", "After meal (খাবারের পর)");
+    } 
+    else if (type === 'gastric') {
+        document.getElementById('chiefComplaintsInput').value = "Burning chest pain, acidity, bloating, indigestion";
+        document.getElementById('findingsInput').value = "Epigastric tenderness present, BP: 125/80 mmHg";
+        document.getElementById('diagnosisInput').value = "Gastroesophageal Reflux Disease (GERD) / Dyspepsia";
+        document.getElementById('testsAdvisedInput').value = "USG of Whole Abdomen, Endoscopy (if needed)";
+        document.getElementById('adviceInput').value = "তৈলাক্ত, ভাজাপোড়া ও মশলাযুক্ত খাবার পরিহার করুন। খাওয়ার পরপরই শুয়ে পড়বেন না।";
+        setFollowUpDays(14);
+
+        addMedicineRow("Cap. Maxpro 20mg", "1+0+1", "14 days", "Before meal (খাবারের ২০ মিনিট আগে)");
+        addMedicineRow("Syr. Antacid Plus", "2 tsp 3 times", "7 days", "After meal (খাবারের পর)");
+        addMedicineRow("Tab. Domperidone 10mg", "1+0+1", "7 days", "Before meal (খাবারের আগে)");
+    }
+    else if (type === 'cold') {
+        document.getElementById('chiefComplaintsInput').value = "Running nose, dry cough, sore throat x 4 days";
+        document.getElementById('findingsInput').value = "Throat congested, Lungs clear, Temp: 99°F";
+        document.getElementById('diagnosisInput').value = "Upper Respiratory Tract Infection (URTI) / Allergic Rhinitis";
+        document.getElementById('testsAdvisedInput').value = "CBC with ESR, Chest X-Ray P/A view";
+        document.getElementById('adviceInput').value = "গরম পানির ভাপ নিন, কুসুম গরম পানিতে লবণ দিয়ে কুলকুচি করুন। ঠান্ডা পানি পরিহার করুন।";
+        setFollowUpDays(7);
+
+        addMedicineRow("Tab. Fexo 120mg", "0+0+1", "7 days", "After meal (রাতে খাবারের পর)");
+        addMedicineRow("Tab. Monas 10mg", "0+0+1", "14 days", "At bedtime (ঘুমানোর আগে)");
+        addMedicineRow("Syr. Tusca", "2 tsp 3 times", "5 days", "After meal (খাবারের পর)");
+    }
+    else if (type === 'htn') {
+        document.getElementById('chiefComplaintsInput').value = "High BP reading, occasional dizziness, morning headache";
+        document.getElementById('findingsInput').value = "BP: 150/95 mmHg, Pulse: 78 bpm, Heart: S1+S2 heard";
+        document.getElementById('diagnosisInput').value = "Primary Essential Hypertension (Stage 1)";
+        document.getElementById('testsAdvisedInput').value = "ECG 12 Lead, Serum Creatinine, Lipid Profile, Serum Electrolytes";
+        document.getElementById('adviceInput').value = "কাঁচা লবণ পুরোপুরি পরিহার করুন। প্রতিদিন অন্তত ৩০ মিনিট হাঁটুন। মানসিক চাপ মুক্ত থাকুন।";
+        setFollowUpDays(30);
+
+        addMedicineRow("Tab. Camlosart 5/50mg", "1+0+0", "1 month", "After breakfast (সকালে খাবারের পর)");
+        addMedicineRow("Cap. Maxpro 20mg", "1+0+0", "1 month", "Before meal (খাবারের আগে)");
+    }
+    else if (type === 'diabetes') {
+        document.getElementById('chiefComplaintsInput').value = "Excessive thirst, frequent urination, weight loss, fatigue";
+        document.getElementById('findingsInput').value = "BMI: 27.5, BP: 130/85 mmHg, Pulse: 74 bpm";
+        document.getElementById('diagnosisInput').value = "Type-2 Diabetes Mellitus (Uncontrolled)";
+        document.getElementById('testsAdvisedInput').value = "HbA1c, Fasting Blood Sugar (FBS), 2hABF, Serum Creatinine, Urine R/E";
+        document.getElementById('adviceInput').value = "মিষ্টি ও চিনিযুক্ত খাবার সম্পূর্ণ বর্জন করুন। ডায়াবেটিক ডায়েট মেনে চলুন ও প্রতিদিন ৪-৫ কিমি হাঁটুন।";
+        setFollowUpDays(30);
+
+        addMedicineRow("Tab. Metfo 500mg", "1+0+1", "1 month", "After meal (খাবারের পর)");
+        addMedicineRow("Cap. Maxpro 20mg", "1+0+1", "1 month", "Before meal (খাবারের আগে)");
+    }
+}
 </script>
 {% endblock %}

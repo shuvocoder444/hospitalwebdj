@@ -6,44 +6,49 @@
     .rx-paper {
         background: #ffffff;
         width: 100%;
-        max-width: 850px;
+        max-width: 820px;
         margin: 0 auto;
-        padding: 40px;
+        padding: 35px 40px;
         border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        box-shadow: none !important;
         border: 1px solid #e2e8f0;
-        min-height: 1000px;
+        min-height: 950px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        color: #0f172a;
     }
     .rx-header {
         border-bottom: 2px solid #0284c7;
-        padding-bottom: 15px;
-        margin-bottom: 20px;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
     }
     .patient-bar {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
         border-radius: 6px;
-        padding: 10px 15px;
-        margin-bottom: 25px;
-        font-size: 0.95rem;
+        padding: 8px 14px;
+        margin-bottom: 20px;
+        font-size: 0.92rem;
+        color: #0f172a;
     }
     .rx-body {
         display: flex;
-        gap: 30px;
+        gap: 25px;
         flex: 1;
+        color: #0f172a;
     }
     .rx-left {
         width: 32%;
         border-right: 1px dashed #cbd5e1;
-        padding-right: 20px;
-        font-size: 0.9rem;
+        padding-right: 18px;
+        font-size: 0.88rem;
+        color: #0f172a;
     }
     .rx-right {
         width: 68%;
-        padding-left: 10px;
+        padding-left: 8px;
+        color: #0f172a;
     }
     .rx-symbol {
         font-family: serif;
@@ -51,12 +56,23 @@
         font-weight: bold;
         color: #0284c7;
         line-height: 1;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
     }
     .rx-footer {
         border-top: 1px solid #e2e8f0;
-        padding-top: 20px;
-        margin-top: 40px;
+        padding-top: 15px;
+        margin-top: 25px;
+        color: #0f172a;
+    }
+    @media print {
+        .rx-paper {
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: auto !important;
+        }
     }
 </style>
 {% endblock %}

@@ -27,7 +27,7 @@ def appointment_list(request):
         'selected_doctor_id': doctor_id,
     }
 
-    if request.htmx:
+    if request.htmx and not getattr(request.htmx, 'boosted', False) and request.headers.get('HX-Boosted') != 'true':
         return render(request, 'appointments/partials/appointment_table.html', context)
     
     return render(request, 'appointments/appointment_list.html', context)
@@ -42,8 +42,33 @@ def appointment_create(request):
         payment_status = request.POST.get('payment_status', 'Paid')
         notes = request.POST.get('notes', '')
 
-        patient = get_object_or_404(Patient, pk=patient_id)
-        doctor = get_object_or_404(Doctor, pk=doctor_id)
+        errors = []
+        if not patient_id:
+            errors.append("রোগী (Patient) নির্বাচন করা আবশ্যক।")
+        if not doctor_id:
+            errors.append("ডাক্তার (Doctor) নির্বাচন করা আবশ্যক।")
+        if not appointment_date:
+            errors.append("অ্যাপয়েন্টমেন্ট এর তারিখ দেওয়া আবশ্যক।")
+
+        patient = Patient.objects.filter(pk=patient_id).first() if patient_id else None
+        doctor = Doctor.objects.filter(pk=doctor_id).first() if doctor_id else None
+
+        if not patient and patient_id:
+            errors.append("নির্বাচিত রোগী ডাটাবেজে পাওয়া যায়নি।")
+        if not doctor and doctor_id:
+            errors.append("নির্বাচিত ডাক্তার ডাটাবেজে পাওয়া যায়নি।")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            patients = Patient.objects.only('id', 'patient_id', 'name', 'phone').order_by('-created_at')[:40]
+            doctors = Doctor.objects.select_related('specialization').filter(is_active=True)
+            return render(request, 'appointments/appointment_form.html', {
+                'patients': patients,
+                'doctors': doctors,
+                'preselected_patient_id': patient_id,
+                'today': appointment_date or timezone.now().strftime('%Y-%m-%d'),
+            })
 
         appointment = Appointment.objects.create(
             patient=patient,

@@ -62,8 +62,8 @@ def patient_list(request):
         'today_date_str': today.strftime('%Y-%m-%d'),
     }
 
-    # HTMX Partial Response for Instant Live Search
-    if request.htmx:
+    # HTMX Partial Response for Instant Live Search (only for targeted partial swaps, not boosted full-page navigation)
+    if request.htmx and not getattr(request.htmx, 'boosted', False) and request.headers.get('HX-Boosted') != 'true':
         return render(request, 'patients/partials/patient_table.html', context)
         
     return render(request, 'patients/patient_list.html', context)
@@ -71,35 +71,54 @@ def patient_list(request):
 @login_required
 def patient_create(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        gender = request.POST.get('gender')
+        name = request.POST.get('name', '').strip()
+        gender = request.POST.get('gender', '').strip()
         age_years = int(request.POST.get('age_years') or 0)
         age_months = int(request.POST.get('age_months') or 0)
         blood_group = request.POST.get('blood_group', 'Unknown')
-        phone = request.POST.get('phone')
-        email = request.POST.get('email', '')
-        nid = request.POST.get('nid_or_birth_cert', '')
-        address = request.POST.get('address', '')
-        emrg_name = request.POST.get('emergency_contact_name', '')
-        emrg_phone = request.POST.get('emergency_contact_phone', '')
-        emrg_relation = request.POST.get('emergency_contact_relation', '')
+        phone = request.POST.get('phone', '').strip()
+        email = request.POST.get('email', '').strip()
+        nid = request.POST.get('nid_or_birth_cert', '').strip()
+        address = request.POST.get('address', '').strip()
+        emrg_name = request.POST.get('emergency_contact_name', '').strip()
+        emrg_phone = request.POST.get('emergency_contact_phone', '').strip()
+        emrg_relation = request.POST.get('emergency_contact_relation', '').strip()
 
-        patient = Patient.objects.create(
-            name=name,
-            gender=gender,
-            age_years=age_years,
-            age_months=age_months,
-            blood_group=blood_group,
-            phone=phone,
-            email=email,
-            nid_or_birth_cert=nid,
-            address=address,
-            emergency_contact_name=emrg_name,
-            emergency_contact_phone=emrg_phone,
-            emergency_contact_relation=emrg_relation
-        )
-        messages.success(request, f"Patient {patient.name} ({patient.patient_id}) registered successfully!")
-        return redirect('patient_detail', pk=patient.pk)
+        errors = []
+        if not name:
+            errors.append("রোগীর নাম (Patient Name) দেওয়া আবশ্যক।")
+        if not gender:
+            errors.append("রোগীর লিঙ্গ (Gender) নির্বাচন করা আবশ্যক।")
+        if not phone:
+            errors.append("মোবাইল নম্বর (Phone Number) দেওয়া আবশ্যক।")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return render(request, 'patients/patient_form.html', {
+                'form_data': request.POST
+            })
+
+        try:
+            patient = Patient.objects.create(
+                name=name,
+                gender=gender,
+                age_years=age_years,
+                age_months=age_months,
+                blood_group=blood_group,
+                phone=phone,
+                email=email,
+                nid_or_birth_cert=nid,
+                address=address,
+                emergency_contact_name=emrg_name,
+                emergency_contact_phone=emrg_phone,
+                emergency_contact_relation=emrg_relation
+            )
+            messages.success(request, f"Patient {patient.name} ({patient.patient_id}) সফলভাবে নিবন্ধিত হয়েছে!")
+            return redirect('patient_detail', pk=patient.pk)
+        except Exception as e:
+            messages.error(request, f"সংরক্ষণ করতে সমস্যা হয়েছে: {str(e)}")
+            return render(request, 'patients/patient_form.html', {'form_data': request.POST})
 
     return render(request, 'patients/patient_form.html')
 
