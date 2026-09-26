@@ -453,11 +453,11 @@
             }
         }
 
-        /* Professional Hospital Print & PDF Engine */
+        /* Professional Hospital Print & PDF Engine (Crisp Solid Black, Bold, Zero Font Overlap) */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 12mm 14mm 12mm 14mm;
+                margin: 10mm 12mm 10mm 12mm;
             }
             *,
             *::before,
@@ -466,12 +466,48 @@
                 -webkit-box-shadow: none !important;
                 text-shadow: none !important;
                 filter: none !important;
+                letter-spacing: normal !important;
+                word-spacing: normal !important;
             }
             body {
                 background: #ffffff !important;
-                color: #0f172a !important;
+                color: #000000 !important;
+                font-family: Arial, "Helvetica Neue", Helvetica, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
                 font-size: 10pt !important;
                 line-height: 1.45 !important;
+                -webkit-font-smoothing: antialiased !important;
+                text-rendering: geometricPrecision !important;
+            }
+            body,
+            main,
+            div,
+            p,
+            span,
+            small,
+            strong,
+            b,
+            h1, h2, h3, h4, h5, h6,
+            table, th, td, tr,
+            .text-muted,
+            .text-secondary,
+            .text-primary,
+            .text-dark,
+            .font-monospace {
+                color: #000000 !important;
+                font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+            }
+            strong,
+            b,
+            th,
+            h1, h2, h3, h4, h5, h6,
+            .fw-bold,
+            .fw-semibold,
+            .fw-medium {
+                font-weight: 700 !important;
+                color: #000000 !important;
+            }
+            table, th, td {
+                border-color: #000000 !important;
             }
             .sidebar, .top-navbar, .no-print, .btn, footer, #topProgressBar, #globalMessageContainer {
                 display: none !important;

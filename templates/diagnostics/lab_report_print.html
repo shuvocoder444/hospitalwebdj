@@ -12,11 +12,12 @@
         border-radius: 8px;
         box-shadow: none !important;
         border: 1px solid #e2e8f0;
-        min-height: 900px;
+        min-height: 850px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        color: #0f172a;
+        color: #000000;
+        font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     }
     .report-header {
         border-bottom: 2px solid #0284c7;
@@ -25,22 +26,23 @@
     }
     .patient-table {
         background: #ffffff;
-        border: 1px solid #cbd5e1;
+        border: 1px solid #000000;
         font-size: 0.9rem;
         margin-bottom: 16px;
     }
     .patient-table td {
         padding: 5px 10px;
-        color: #0f172a;
+        color: #000000;
+        font-weight: 600;
         vertical-align: middle;
+        border-color: #cbd5e1;
     }
     .report-title {
         background: #0284c7;
         color: #ffffff;
         text-align: center;
-        padding: 4px;
+        padding: 5px;
         font-weight: 700;
-        letter-spacing: 0.04em;
         margin-bottom: 14px;
         border-radius: 4px;
         text-transform: uppercase;
@@ -50,18 +52,20 @@
         background-color: #f8fafc;
         font-size: 0.82rem;
         text-transform: uppercase;
-        color: #475569;
+        color: #000000;
+        font-weight: 700;
         padding: 6px 10px;
-        border-bottom: 1px solid #cbd5e1;
+        border-bottom: 1px solid #000000;
     }
     .results-table td {
         padding: 6px 10px;
-        color: #0f172a;
-        border-bottom: 1px solid #f1f5f9;
+        color: #000000;
+        font-weight: 600;
+        border-bottom: 1px solid #cbd5e1;
         font-size: 0.88rem;
     }
-    .flag-high { color: #dc2626; font-weight: bold; }
-    .flag-low { color: #ea580c; font-weight: bold; }
+    .flag-high { color: #dc2626; font-weight: 800; }
+    .flag-low { color: #ea580c; font-weight: 800; }
 
     @media print {
         .report-paper {
@@ -71,6 +75,16 @@
             width: 100% !important;
             max-width: 100% !important;
             min-height: auto !important;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif !important;
+        }
+        .report-title {
+            background: #f1f5f9 !important;
+            color: #000000 !important;
+            border: 1px solid #000000 !important;
+            font-weight: 800 !important;
+        }
+        .patient-table, .results-table {
+            border-color: #000000 !important;
         }
     }
 </style>
@@ -106,10 +120,12 @@
                 {% if hospital_setting.logo %}
                 <img src="{{ hospital_setting.logo.url }}" alt="Logo" style="max-height: 45px;">
                 {% endif %}
-                <h3 class="fw-bold text-primary mb-0">{{ hospital_setting.hospital_name|default:"WebKoders Healthcare" }}</h3>
+                <h3 class="fw-bold text-dark mb-0" style="color: #000000 !important; font-weight: 800;">{{ hospital_setting.hospital_name|default:"WebKoders Healthcare" }}</h3>
             </div>
-            <p class="text-dark fw-semibold mb-0">{{ hospital_setting.hospital_tagline|default:"CLINICAL LABORATORY & DIAGNOSTIC CENTER" }}</p>
-            <small class="text-muted">{{ hospital_setting.address }} | Helpline: {{ hospital_setting.phone }}</small>
+            <p class="text-dark fw-bold mb-1" style="color: #000000 !important; font-size: 0.95rem;">{{ hospital_setting.hospital_tagline|default:"CLINICAL LABORATORY & DIAGNOSTIC CENTER" }}</p>
+            <div class="text-dark fw-medium" style="color: #000000 !important; font-size: 0.86rem; word-break: normal; white-space: normal; line-height: 1.45;">
+                {{ hospital_setting.address }} {% if hospital_setting.phone %}| Helpline: {{ hospital_setting.phone }}{% endif %}
+            </div>
         </div>
         {% endif %}
 
