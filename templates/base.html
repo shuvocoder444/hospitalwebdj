@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ hospital_setting.hospital_name|default:"Hospital Management ERP" }}{% endblock %} — WebKoders Healthcare</title>
+    
+    {% if hospital_setting.favicon %}
+    <link rel="icon" type="image/png" href="{{ hospital_setting.favicon.url }}">
+    {% endif %}
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Google Fonts: Inter & Plus Jakarta Sans & Hind Siliguri -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+    
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --primary-light: #e0f2fe;
+            --secondary: #0f172a;
+            --sidebar-bg: #090d16;
+            --sidebar-card: #111827;
+            --sidebar-hover: #1e293b;
+            --sidebar-active: #0284c7;
+            --bg-light: #f8fafc;
+            --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', 'Inter', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-light);
+            color: #1e293b;
+            font-size: 0.92rem;
+            line-height: 1.55;
+            overflow-x: hidden;
+            top: 0px !important;
+            scroll-behavior: smooth;
+        }
+
+        .btn, .nav-link, .dropdown-item, .card, .sidebar-link {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Hide any Google Translate Banner / Iframe */
+        .goog-te-banner-frame, 
+        iframe.goog-te-banner-frame,
+        .goog-te-banner-frame.skiptranslate, 
+        .goog-te-gadget-simple, 
+        #goog-gt-tt, 
+        .goog-te-balloon-frame,
+        .skiptranslate { 
+            display: none !important; 
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        body { 
+            top: 0px !important; 
+            position: static !important;
+        }
+        .goog-text-highlight { background: transparent !important; box-shadow: none !important; }
+
+        /* Buttons with bg-white - ensure bold dark black text for high contrast */
+        .btn.bg-white,
+        .btn-outline-primary.bg-white,
+        .btn-outline-secondary.bg-white,
+        .btn-light.bg-white {
+            color: #0f172a !important;
+            border-color: #cbd5e1 !important;
+            font-weight: 600 !important;
+        }
+        .btn.bg-white i,
+        .btn-outline-primary.bg-white i,
+        .btn-outline-secondary.bg-white i,
+        .btn-light.bg-white i {
+            color: #0284c7 !important;
+        }
+        .btn.bg-white:hover,
+        .btn-outline-primary.bg-white:hover,
+        .btn-outline-secondary.bg-white:hover,
+        .btn-light.bg-white:hover {
+            background-color: #f8fafc !important;
+            color: #0284c7 !important;
+            border-color: #94a3b8 !important;
+        }
+
+        /* Custom Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            max-height: 100vh;
+            background-color: var(--sidebar-bg);
+            color: #e2e8f0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1020;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            overflow: hidden;
+        }
+        .sidebar .brand {
+            padding: 1.15rem 1.35rem;
+            color: #ffffff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            flex-shrink: 0;
+        }
+        .sidebar-brand-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.15rem;
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+            flex-shrink: 0;
+        }
+        .sidebar-menu-wrapper {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0.75rem 0.65rem 3rem;
+        }
+        .sidebar-menu-wrapper::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar-menu-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu .menu-header {
+            padding: 0.85rem 0.85rem 0.3rem;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            font-weight: 700;
+        }
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 0.62rem 0.85rem;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            margin-bottom: 2px;
+            position: relative;
+        }
+        .sidebar-menu a:hover {
+            background-color: var(--sidebar-hover);
+            color: #ffffff;
+            transform: translateX(2px);
+        }
+        .sidebar-menu a.active {
+            background: linear-gradient(135deg, rgba(2, 132, 199, 0.28) 0%, rgba(56, 189, 248, 0.15) 100%);
+            color: #38bdf8;
+            font-weight: 700;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            box-shadow: 0 0 12px rgba(2, 132, 199, 0.2);
+        }
+        .sidebar-menu a.active::after {
+            content: '●';
+            margin-left: auto;
+            font-size: 0.65rem;
+            color: #38bdf8;
+            text-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+        }
+        .sidebar-menu a i {
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Workspace Layout */
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-light);
+            transition: margin-left 0.25s ease;
+        }
+
+        /* Modern Top Navbar */
+        .top-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.75rem 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 990;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+        }
+
+        .content-body {
+            padding: 1.75rem 1.75rem 2.5rem;
+            flex: 1;
+        }
+
+        /* Cards & Surfaces */
+        .stat-card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 1.25rem 1.35rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow-hover);
+            border-color: #cbd5e1;
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.45rem;
+            flex-shrink: 0;
+        }
+        .card-custom {
+            background: #ffffff;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+        .card-custom .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 1rem 1.35rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Tables */
+        .table-custom {
+            margin-bottom: 0;
+            font-size: 0.88rem;
+        }
+        .table-custom thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 0.73rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+        }
+        .table-custom tbody td {
+            padding: 0.85rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .table-custom tbody tr:hover {
+            background-color: #f0f9ff;
+        }
+
+        /* Soft Badges */
+        .badge-soft-success { background: #dcfce7; color: #15803d; font-weight: 600; border: 1px solid #bbf7d0; }
+        .badge-soft-danger { background: #fee2e2; color: #b91c1c; font-weight: 600; border: 1px solid #fecaca; }
+        .badge-soft-warning { background: #fef3c7; color: #b45309; font-weight: 600; border: 1px solid #fde68a; }
+        .badge-soft-info { background: #e0f2fe; color: #0369a1; font-weight: 600; border: 1px solid #bae6fd; }
+        .badge-soft-primary { background: #dbeafe; color: #1d4ed8; font-weight: 600; border: 1px solid #bfdbfe; }
+        .badge-soft-secondary { background: #f1f5f9; color: #475569; font-weight: 600; border: 1px solid #e2e8f0; }
+
+        /* HTMX Loading Indicator */
+        .htmx-indicator {
+            display: none;
+        }
+        .htmx-request .htmx-indicator,
+        .htmx-request.htmx-indicator {
+            display: inline-block;
+        }
+
+        .pulse-live {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* Responsive Mobile Layout */
+        @media (max-width: 991px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .content-body {
+                padding: 1.25rem 1rem;
+            }
+        }
+
+        @media print {
+            .sidebar, .top-navbar, .no-print, .btn, footer {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding: 0 !important;
+            }
+            .content-body {
+                padding: 0 !important;
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+
+    <!-- Sidebar with Smooth Scroll & Clean English Navigation -->
+    <aside class="sidebar" id="appSidebar">
+        <div class="brand">
+            {% if hospital_setting.logo %}
+                <img src="{{ hospital_setting.logo.url }}" alt="Logo" style="max-height: 36px; max-width: 48px; object-fit: contain;" class="bg-white p-1 rounded-2 shadow-xs">
+            {% else %}
+                <div class="sidebar-brand-icon">
+                    <i class="bi bi-hospital"></i>
+                </div>
+            {% endif %}
+            <div class="overflow-hidden">
+                <div class="fw-bold text-white text-truncate" style="font-size: 0.95rem;">{{ hospital_setting.hospital_name|default:"WebKoders" }}</div>
+            </div>
+        </div>
+
+        <div class="sidebar-menu-wrapper" id="sidebarMenuWrapper">
+            <ul class="sidebar-menu">
+                <!-- Overview: Accessible to all logged-in staff -->
+                <li class="menu-header">Overview</li>
+                <li>
+                    <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                    </a>
+                </li>
+
+                <!-- Clinical & OPD Section (Admin, Doctor, Reception, Lab Tech, Pharmacist) -->
+                {% if request.user.is_admin or request.user.is_receptionist or request.user.is_doctor or request.user.is_lab_technician or request.user.is_pharmacist %}
+                <li class="menu-header">Clinical & OPD</li>
+                <li>
+                    <a href="{% url 'patient_list' %}" class="{% if 'patient' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-people-fill"></i> Patients
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if request.user.is_admin or request.user.is_receptionist or request.user.is_doctor %}
+                <li>
+                    <a href="{% url 'appointment_list' %}" class="{% if 'appointment' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-calendar2-check-fill"></i> OPD Appointments
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if request.user.is_admin or request.user.is_doctor %}
+                <li>
+                    <a href="{% url 'doctor_list' %}" class="{% if 'doctor' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-person-badge-fill"></i> Doctors & Prescriptions
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Diagnostics & Inpatient (Admin, Doctor, Lab Tech, Reception) -->
+                {% if request.user.is_admin or request.user.is_doctor or request.user.is_lab_technician or request.user.is_receptionist %}
+                <li class="menu-header">Diagnostics & Inpatient</li>
+                {% if request.user.is_admin or request.user.is_doctor or request.user.is_lab_technician %}
+                <li>
+                    <a href="{% url 'lab_orders_list' %}" class="{% if 'lab' in request.resolver_match.url_name and 'test' not in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-clipboard2-pulse-fill"></i> Diagnostic Lab (LIS)
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.is_admin or request.user.is_lab_technician %}
+                <li>
+                    <a href="{% url 'test_list' %}" class="{% if 'test' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-card-checklist"></i> Lab Test Catalog
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.is_admin or request.user.is_doctor or request.user.is_receptionist %}
+                <li>
+                    <a href="{% url 'ward_bed_status' %}" class="{% if 'ward' in request.resolver_match.url_name or 'admission' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-hospital-fill"></i> IPD Beds & Cabins
+                    </a>
+                </li>
+                {% endif %}
+                {% endif %}
+
+                <!-- Commercial & Accounts Section (Admin, Reception, Pharmacist) -->
+                {% if request.user.is_admin or request.user.is_receptionist or request.user.is_pharmacist %}
+                <li class="menu-header">Commercial & Accounts</li>
+                {% if request.user.is_admin or request.user.is_pharmacist %}
+                <li>
+                    <a href="{% url 'pharmacy_pos' %}" class="{% if request.resolver_match.url_name == 'pharmacy_pos' %}active{% endif %}">
+                        <i class="bi bi-cart3"></i> Pharmacy POS
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'medicine_stock_list' %}" class="{% if 'medicine' in request.resolver_match.url_name or 'stock' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-capsule-pill"></i> Medicine Inventory
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.is_admin or request.user.is_receptionist %}
+                <li>
+                    <a href="{% url 'invoice_list' %}" class="{% if 'invoice' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-receipt-cutoff"></i> Invoices & Billing
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.is_admin %}
+                <li>
+                    <a href="{% url 'expense_list' %}" class="{% if 'expense' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-wallet2"></i> Expenses & Vouchers
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'financial_ledger' %}" class="{% if 'statement' in request.resolver_match.url_name or 'financial_ledger' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-graph-up-arrow"></i> P&L Financial Statement
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.is_admin or request.user.is_receptionist %}
+                <li>
+                    <a href="{% url 'daily_ledger' %}" class="{% if 'daily_ledger' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-cash-stack"></i> Daily Cash Ledger
+                    </a>
+                </li>
+                {% endif %}
+                {% endif %}
+
+                <!-- Administration & Settings Section (Admin Only) -->
+                {% if request.user.is_admin %}
+                <li class="menu-header">Administration & Settings</li>
+                <li>
+                    <a href="{% url 'hospital_settings' %}" class="{% if 'settings' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="bi bi-gear-fill"></i> Hospital Settings & Branding
+                    </a>
+                </li>
+                <li>
+                    <a href="/admin/" target="_blank">
+                        <i class="bi bi-sliders2"></i> Django SuperAdmin
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-sm btn-light border d-lg-none" type="button" onclick="toggleSidebar()">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <span class="text-muted small">
+                    <i class="bi bi-clock me-1 text-primary"></i> {% now "l, d F Y, h:i A" %}
+                </span>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <a href="{% url 'landing' %}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-1 shadow-xs">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    <span class="d-none d-sm-inline">Public Website</span>
+                </a>
+                
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 border shadow-xs rounded-pill px-3 py-1" type="button" data-bs-toggle="dropdown">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; font-size: 0.8rem; font-weight: 700;">
+                            {{ request.user.username|first|upper|default:"A" }}
+                        </div>
+                        <span class="fw-semibold small text-dark">{{ request.user.get_full_name|default:request.user.username|default:"Admin Staff" }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="border-radius: 12px; font-size: 0.88rem;">
+                        <li class="px-3 py-2 border-bottom">
+                            <div class="fw-bold text-dark">{{ request.user.get_full_name|default:request.user.username }}</div>
+                            <small class="text-muted">Role: {{ request.user.get_role_display|default:"Staff" }}</small>
+                        </li>
+                        {% if request.user.is_admin %}
+                        <li><a class="dropdown-item py-2" href="{% url 'hospital_settings' %}"><i class="bi bi-gear me-2 text-primary"></i>Hospital Settings</a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item py-2" href="{% url 'landing' %}" target="_blank"><i class="bi bi-globe me-2 text-info"></i>Public Website</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li><a class="dropdown-item py-2 text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        {% if messages %}
+        <div class="px-4 pt-3 no-print">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 rounded-3" role="alert">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>{{ message }}</div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Content Body -->
+        <main class="content-body">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Professional ERP Footer -->
+        <footer class="mt-auto py-3 px-4 bg-white border-top no-print">
+            <div class="container-fluid d-flex flex-column flex-md-row align-items-center justify-content-between text-muted small gap-2">
+                <div>
+                    <strong class="text-dark">{{ hospital_setting.hospital_name|default:"Hospital Management System" }}</strong> 
+                    &copy; {% now "Y" %} — All Rights Reserved. 
+                    <span class="d-none d-sm-inline ms-1">| 24/7 Helpline: <strong class="text-primary">{{ hospital_setting.helpline_number|default:"+880 1700-000000" }}</strong></span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill">
+                        <i class="bi bi-shield-check me-1"></i>WebKoders Core Enterprise
+                    </span>
+                    <a href="https://webkoders.com" target="_blank" class="text-decoration-none text-muted fw-semibold">
+                        Powered by WebKoders
+                    </a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Clean any leftover Google Translate cookies or injected frames
+        (function() {
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=" + window.location.hostname + "; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=." + window.location.hostname + "; path=/;";
+            
+            // Remove any Google Translate iframes or banners immediately
+            const removeGoogleBanners = function() {
+                const banners = document.querySelectorAll('.goog-te-banner-frame, iframe[name^="goog"], #goog-gt-tt, .skiptranslate');
+                banners.forEach(el => {
+                    if (el && el.parentNode) {
+                        el.parentNode.removeChild(el);
+                    }
+                });
+                document.body.style.top = '0px';
+                document.body.style.position = 'static';
+            };
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', removeGoogleBanners);
+            } else {
+                removeGoogleBanners();
+            }
+        })();
+
+        function toggleSidebar() {
+            const sb = document.getElementById('appSidebar');
+            sb.classList.toggle('show');
+        }
+
+        // Preserve sidebar scroll position on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            // Restore Sidebar scroll position
+
+            // Restore Sidebar scroll position
+            const wrapper = document.getElementById('sidebarMenuWrapper');
+            if (wrapper) {
+                const savedScroll = sessionStorage.getItem('sidebar_scroll_pos');
+                if (savedScroll !== null) {
+                    wrapper.scrollTop = parseInt(savedScroll, 10);
+                }
+
+                const activeItem = wrapper.querySelector('.sidebar-menu a.active');
+                if (activeItem) {
+                    activeItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+                }
+
+                wrapper.addEventListener('scroll', function () {
+                    sessionStorage.setItem('sidebar_scroll_pos', wrapper.scrollTop);
+                });
+
+                const links = wrapper.querySelectorAll('.sidebar-menu a');
+                links.forEach(function (link) {
+                    link.addEventListener('click', function () {
+                        sessionStorage.setItem('sidebar_scroll_pos', wrapper.scrollTop);
+                    });
+                });
+            }
+
+            // Prevent page jerk/jumping on dummy hash links
+            document.querySelectorAll('a[href="#"]').forEach(function(anchor) {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                });
+            });
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Expenses Management - WebKoders ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-wallet2 text-danger me-2"></i>Hospital Expenses & Vouchers</h4>
+        <p class="text-muted mb-0">Record and monitor staff salaries, medical reagents, building rent and operational bills</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'financial_ledger' %}" class="btn btn-outline-primary bg-white shadow-sm">
+            <i class="bi bi-graph-up-arrow me-1"></i> Profit & Loss Statement
+        </a>
+        <a href="{% url 'expense_create' %}" class="btn btn-danger shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> Record New Expense
+        </a>
+    </div>
+</div>
+
+<!-- Summary Card -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card border-start border-4 border-danger">
+            <span class="text-muted small text-uppercase fw-bold">Total Filtered Expenses</span>
+            <h3 class="fw-bold my-1 text-danger">৳{{ total_expense_amount|intcomma }}</h3>
+            <small class="text-muted"><i class="bi bi-cash"></i> Operational & Capital outflow</small>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar with Instant HTMX Trigger -->
+<div class="card card-custom mb-4">
+    <div class="card-body p-3">
+        <form id="expenseFilterForm" 
+              class="row g-2 align-items-center"
+              hx-get="{% url 'expense_list' %}"
+              hx-trigger="keyup changed delay:250ms from:input[name='q'], change from:select, change from:input[type='date']"
+              hx-target="#expenseTableContainer"
+              hx-indicator="#expIndicator">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="⚡ Search by Voucher No, Title or Payee...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="category" class="form-select">
+                    <option value="">All Expense Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="from_date" value="{{ from_date }}" class="form-control" placeholder="From Date">
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="to_date" value="{{ to_date }}" class="form-control" placeholder="To Date">
+            </div>
+            <div class="col-md-1 text-center">
+                <span id="expIndicator" class="spinner-border spinner-border-sm text-danger htmx-indicator" role="status"></span>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Expense Table Container -->
+<div class="card card-custom">
+    <div class="card-body p-0" id="expenseTableContainer">
+        {% include 'billing/partials/expense_table.html' %}
+    </div>
+</div>
+{% endblock %}

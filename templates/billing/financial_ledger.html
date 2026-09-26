@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Profit & Loss Financial Statement - WebKoders ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Financial Accounts Ledger & Profit/Loss Statement</h4>
+        <p class="text-muted mb-0">Period: <strong class="text-dark">{{ from_date }}</strong> to <strong class="text-dark">{{ to_date }}</strong></p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary bg-white shadow-sm">
+            <i class="bi bi-printer me-1"></i> Print Statement
+        </button>
+    </div>
+</div>
+
+<!-- Date Filter Form -->
+<div class="card card-custom mb-4 no-print">
+    <div class="card-body p-3">
+        <form method="GET" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold text-muted mb-1">From Date</label>
+                <input type="date" name="from_date" value="{{ from_date }}" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold text-muted mb-1">To Date</label>
+                <input type="date" name="to_date" value="{{ to_date }}" class="form-control">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter me-1"></i> Generate Financial Statement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- High-Level Financial Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card border-start border-4 border-success">
+            <span class="text-muted small text-uppercase fw-bold">Total Gross Income</span>
+            <h3 class="fw-bold my-1 text-success">৳{{ total_income|intcomma }}</h3>
+            <small class="text-muted"><i class="bi bi-arrow-down-left text-success"></i> Received across all counters</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card border-start border-4 border-danger">
+            <span class="text-muted small text-uppercase fw-bold">Total Expenses</span>
+            <h3 class="fw-bold my-1 text-danger">৳{{ total_expense|intcomma }}</h3>
+            <small class="text-muted"><i class="bi bi-arrow-up-right text-danger"></i> Operational & Maintenance</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card border-start border-4 {% if net_profit >= 0 %}border-primary{% else %}border-danger{% endif %}">
+            <span class="text-muted small text-uppercase fw-bold">Net Profit / Surplus</span>
+            <h3 class="fw-bold my-1 {% if net_profit >= 0 %}text-primary{% else %}text-danger{% endif %}">৳{{ net_profit|intcomma }}</h3>
+            <small class="{% if net_profit >= 0 %}text-success{% else %}text-danger{% endif %} fw-semibold">
+                {% if net_profit >= 0 %}<i class="bi bi-check-circle me-1"></i>Positive Operating Margin{% else %}<i class="bi bi-exclamation-triangle me-1"></i>Operating Deficit{% endif %}
+            </small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Income Breakdown by Department -->
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-light">
+                <span class="fw-bold text-dark"><i class="bi bi-pie-chart text-success me-2"></i>Revenue by Department</span>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <strong class="text-dark d-block">Diagnostic & Pathology (LIS)</strong>
+                            <small class="text-muted">Blood, Urine, X-Ray, USG tests</small>
+                        </div>
+                        <span class="fs-6 fw-bold text-success">৳{{ diagnostic_income|intcomma }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <strong class="text-dark d-block">IPD Hospitalization & Cabins</strong>
+                            <small class="text-muted">Bed charges & advance deposits</small>
+                        </div>
+                        <span class="fs-6 fw-bold text-success">৳{{ ipd_income|intcomma }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <strong class="text-dark d-block">OPD Doctor Consultations</strong>
+                            <small class="text-muted">Outdoor tokens & chamber fees</small>
+                        </div>
+                        <span class="fs-6 fw-bold text-success">৳{{ opd_income|intcomma }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <strong class="text-dark d-block">Pharmacy Medicine Sales</strong>
+                            <small class="text-muted">OTC & Inpatient pharmacy billing</small>
+                        </div>
+                        <span class="fs-6 fw-bold text-success">৳{{ pharmacy_income|intcomma }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3 bg-light">
+                        <strong>Total Revenue Collected:</strong>
+                        <strong class="fs-5 text-success">৳{{ total_income|intcomma }}</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Breakdown by Category -->
+    <div class="col-lg-6">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-light">
+                <span class="fw-bold text-dark"><i class="bi bi-wallet text-danger me-2"></i>Expenses by Head</span>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush small">
+                    {% for cat in expense_categories %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <strong class="text-dark d-block">{{ cat.name }}</strong>
+                            <small class="text-muted">{{ cat.description|default:"Operational cost" }}</small>
+                        </div>
+                        <span class="fs-6 fw-bold text-danger">৳{{ cat.category_total|intcomma }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center py-4 text-muted">No expenses recorded for this date range.</li>
+                    {% endfor %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3 bg-light">
+                        <strong>Total Operating Expenses:</strong>
+                        <strong class="fs-5 text-danger">৳{{ total_expense|intcomma }}</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

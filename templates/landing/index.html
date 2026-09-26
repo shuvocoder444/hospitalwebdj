@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if hospital_setting.hospital_name %}{{ hospital_setting.hospital_name }} — {% endif %}Hospital & Diagnostic Management System</title>
+    
+    {% if hospital_setting.favicon %}
+    <link rel="icon" type="image/png" href="{{ hospital_setting.favicon.url }}">
+    {% endif %}
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Google Fonts: Inter & Plus Jakarta Sans & Hind Siliguri -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+    
+    <style>
+        :root {
+            --primary: #0284c7;
+            --primary-dark: #0369a1;
+            --secondary: #0f172a;
+            --accent: #38bdf8;
+            --bg-light: #f8fafc;
+        }
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 85px;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', 'Inter', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #334155;
+            background-color: #ffffff;
+            overflow-x: hidden;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            scroll-behavior: smooth;
+        }
+
+        /* Hide any Google Translate Banner / Iframe */
+        .goog-te-banner-frame, 
+        iframe.goog-te-banner-frame,
+        .goog-te-banner-frame.skiptranslate, 
+        .goog-te-gadget-simple, 
+        #goog-gt-tt, 
+        .goog-te-balloon-frame,
+        .skiptranslate { 
+            display: none !important; 
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        body { 
+            top: 0px !important; 
+            position: static !important;
+        }
+        .goog-text-highlight { background: transparent !important; box-shadow: none !important; }
+
+        /* Top Announcement / Helpline Bar */
+        .top-info-bar {
+            background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+            color: #ffffff;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        /* Modern Navigation Bar */
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.75rem 0;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.04);
+        }
+        .navbar-brand-logo {
+            max-height: 42px;
+            max-width: 140px;
+            object-fit: contain;
+            border-radius: 8px;
+            padding: 2px 4px;
+            background: #ffffff;
+        }
+        .navbar-brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.35rem;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+        }
+        .nav-link-custom {
+            color: #334155 !important;
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-link-custom:hover {
+            color: #0284c7 !important;
+            background-color: #f0f9ff;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: radial-gradient(120% 100% at 50% 0%, #e0f2fe 0%, #f8fafc 60%, #ffffff 100%);
+            padding: 80px 0 65px;
+            position: relative;
+        }
+        .hero-badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 18px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #bae6fd;
+        }
+
+        /* Buttons with bg-white - ensure bold dark black text for high contrast */
+        .btn.bg-white,
+        .btn-outline-primary.bg-white,
+        .btn-outline-secondary.bg-white,
+        .btn-light.bg-white {
+            color: #0f172a !important;
+            border-color: #cbd5e1 !important;
+            font-weight: 600 !important;
+        }
+        .btn.bg-white i,
+        .btn-outline-primary.bg-white i,
+        .btn-outline-secondary.bg-white i,
+        .btn-light.bg-white i {
+            color: #0284c7 !important;
+        }
+        .btn.bg-white:hover,
+        .btn-outline-primary.bg-white:hover,
+        .btn-outline-secondary.bg-white:hover,
+        .btn-light.bg-white:hover {
+            background-color: #f8fafc !important;
+            color: #0284c7 !important;
+            border-color: #94a3b8 !important;
+        }
+        .hero-title {
+            font-size: 3.1rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.25;
+            color: #0f172a;
+        }
+        .hero-title span {
+            background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Cards & Features */
+        .feature-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 28px 24px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+            height: 100%;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 25px -5px rgba(0, 0, 0, 0.08);
+            border-color: #bae6fd;
+        }
+        .feature-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.65rem;
+            margin-bottom: 18px;
+        }
+
+        .doctor-card {
+            background: #ffffff;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+        }
+        .doctor-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 24px -4px rgba(0,0,0,0.08);
+            border-color: #38bdf8;
+        }
+
+        /* Footer */
+        .footer-custom {
+            background: #090d16;
+            color: #ffffff;
+            padding: 70px 0 25px;
+        }
+        .footer-custom a,
+        .footer-custom p,
+        .footer-custom span,
+        .footer-custom li,
+        .footer-custom small,
+        .footer-custom div {
+            color: #ffffff !important;
+        }
+        .footer-custom a:hover {
+            color: #38bdf8 !important;
+            text-decoration: underline !important;
+        }
+
+        .pulse-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background-color: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Medical Info Bar -->
+    <div class="top-info-bar">
+        <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-1">
+            <div class="d-flex align-items-center gap-3">
+                <span><i class="bi bi-telephone-fill text-warning me-1"></i> 24/7 Helpline: <strong>{{ hospital_setting.helpline_number|default:"+880 1700-000000" }}</strong></span>
+                <span class="opacity-50 d-none d-md-inline">|</span>
+                <span class="d-none d-md-inline"><i class="bi bi-geo-alt-fill text-info me-1"></i> {{ hospital_setting.address|default:"Dhaka, Bangladesh" }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-white rounded-pill px-3 py-1 small fw-bold shadow-xs border" style="color: #000000 !important; background-color: #ffffff !important;">
+                    <i class="bi bi-shield-check me-1 text-primary"></i> <span style="color: #000000 !important;">24/7 Emergency & Care</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'landing' %}">
+                {% if hospital_setting.logo %}
+                    <img src="{{ hospital_setting.logo.url }}" alt="Logo" class="navbar-brand-logo border shadow-xs">
+                {% else %}
+                    <div class="navbar-brand-icon">
+                        <i class="bi bi-hospital"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <span class="fw-bold fs-5 text-dark">{{ hospital_setting.hospital_name|default:"Hospital Management System" }}</span>
+                </div>
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMenu">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-semibold">
+                    <li class="nav-item"><a class="nav-link nav-link-custom" href="{% url 'landing' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" href="#modules">Clinical Modules</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" href="#doctors">Our Specialists</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" href="#diagnostics">Diagnostic LIS</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-2">
+                    {% if request.user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="btn btn-primary fw-semibold px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-1">
+                            <i class="bi bi-grid-1x2"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    {% else %}
+                        <button type="button" class="btn btn-primary fw-semibold px-4 py-2 rounded-pill shadow-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#quickLoginModal">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <span>Login</span>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages / Alerts -->
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 rounded-3 d-flex align-items-center gap-2" role="alert">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-7">
+                    <div class="hero-badge mb-3">
+                        <span class="pulse-dot"></span>
+                        <span>Integrated Healthcare & Hospital System</span>
+                    </div>
+                    <h1 class="hero-title mb-3">
+                        Modern Healthcare & <span>Hospital Management</span>
+                    </h1>
+                    <p class="text-secondary fs-5 mb-4 lh-base">
+                        An integrated, modern software suite for Hospitals, Clinics, and Diagnostic Centers. Seamlessly manage Patient EHR, OPD Token Queues, Digital E-Prescriptions, Pathology Lab LIS, Pharmacy POS, and Hospital Billing in one unified ecosystem.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-3 mb-4">
+                        <a href="#appointment-booking" class="btn btn-primary btn-lg px-4 py-3 rounded-pill fw-bold shadow d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar2-check"></i> Book Doctor Serial Online
+                        </a>
+                        <button type="button" class="btn btn-outline-dark btn-lg px-4 py-3 rounded-pill fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#quickLoginModal">
+                            <i class="bi bi-shield-lock text-primary"></i> Staff Portal Login
+                        </button>
+                    </div>
+
+                    <div class="row g-3 pt-3 border-top">
+                        <div class="col-auto">
+                            <span class="fw-bold text-dark fs-5">{{ total_doctors }}+</span>
+                            <small class="text-muted d-block">Specialist Doctors</small>
+                        </div>
+                        <div class="col-auto border-start ps-3">
+                            <span class="fw-bold text-dark fs-5">{{ total_tests }}+</span>
+                            <small class="text-muted d-block">Diagnostic Tests</small>
+                        </div>
+                        <div class="col-auto border-start ps-3">
+                            <span class="fw-bold text-dark fs-5">{{ total_beds }}+</span>
+                            <small class="text-muted d-block">Cabins & Beds</small>
+                        </div>
+                        <div class="col-auto border-start ps-3">
+                            <span class="fw-bold text-success fs-5">24/7</span>
+                            <small class="text-muted d-block">Emergency Care</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Online Appointment Booking Box -->
+                <div class="col-lg-5" id="appointment-booking">
+                    <div class="card border-0 shadow-lg rounded-4 p-4 p-md-4 bg-white border border-primary-subtle">
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            <div class="p-2 bg-primary-subtle text-primary rounded-circle">
+                                <i class="bi bi-calendar-heart fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0">Book Doctor Appointment</h5>
+                                <small class="text-muted">Instant online token & doctor queue reservation</small>
+                            </div>
+                        </div>
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="public_appointment" value="1">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Patient Full Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" placeholder="e.g. Md. Jahangir Alam" required>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="phone" class="form-control" placeholder="017XXXXXXXX" required>
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label small fw-semibold">Age</label>
+                                    <input type="number" name="age" class="form-control" placeholder="32" value="30">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label small fw-semibold">Gender</label>
+                                    <select name="gender" class="form-select">
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Specialist Doctor <span class="text-danger">*</span></label>
+                                <select name="doctor" class="form-select" required>
+                                    <option value="">-- Select Specialist Doctor --</option>
+                                    {% for doc in doctors %}
+                                    <option value="{{ doc.id }}">{{ doc.name }} ({{ doc.specialization.name|default:"Specialist" }}) — Fee: ৳{{ doc.consultation_fee }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Appointment Date <span class="text-danger">*</span></label>
+                                <input type="date" name="appointment_date" class="form-control" value="{{ today }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Symptoms / Medical Problem</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Brief description of patient symptoms..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow d-flex align-items-center justify-content-center gap-2">
+                                <i class="bi bi-check-circle fs-5"></i>
+                                <span>Confirm Appointment Serial</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Clinical Modules -->
+    <section class="py-5" id="modules">
+        <div class="container py-4">
+            <div class="text-center max-w-700 mx-auto mb-5">
+                <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold mb-2">COMPLETE HEALTHCARE SUITE</span>
+                <h2 class="fw-bold text-dark">One Unified Platform for All Hospital Departments</h2>
+                <p class="text-muted">From Patient Registration to Doctor Prescriptions, Laboratory LIS, Pharmacy POS, and Financial Billing.</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-primary-subtle text-primary">
+                            <i class="bi bi-person-lines-fill"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Patient Registration & EHR</h5>
+                        <p class="text-muted small">Unique Patient ID (UHID), complete medical history, previous electronic prescriptions, and diagnostic test records stored securely.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-success-subtle text-success">
+                            <i class="bi bi-calendar2-check-fill"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">OPD Serial & Token Queue</h5>
+                        <p class="text-muted small">Automatic token number generation based on doctor visiting hours, waiting room live display screen, and automated SMS alerts.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-info-subtle text-info">
+                            <i class="bi bi-prescription2"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Digital E-Prescription (Rx)</h5>
+                        <p class="text-muted small">Custom dosage guidelines (1+0+1), before/after meal instructions, diagnostic test recommendations, and print-ready digital prescriptions.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-warning-subtle text-warning">
+                            <i class="bi bi-clipboard2-pulse-fill"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Pathology & Diagnostic LIS</h5>
+                        <p class="text-muted small">Complete Laboratory Information System (LIS). Test sample tracking, automatic result entry with reference ranges, and branded report printing.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-danger-subtle text-danger">
+                            <i class="bi bi-hospital-fill"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">IPD Bed & Cabin Management</h5>
+                        <p class="text-muted small">Live occupancy status of ICU, CCU, General Wards, and VIP Cabins. Patient admission records, nursing notes, and discharge summaries.</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="feature-card">
+                        <div class="feature-icon bg-secondary-subtle text-dark">
+                            <i class="bi bi-capsule"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-2">Pharmacy POS & Billing</h5>
+                        <p class="text-muted small">Barcode-powered retail Pharmacy POS, expiry and low-stock monitoring, cash vouchers, daily cash ledger, and financial balance sheet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Doctors Showcase -->
+    <section class="py-5 bg-light" id="doctors">
+        <div class="container py-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
+                <div>
+                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold mb-2">MEDICAL EXPERTS</span>
+                    <h2 class="fw-bold text-dark mb-0">Specialist Medical Consultants</h2>
+                </div>
+                <a href="#appointment-booking" class="btn btn-outline-primary fw-bold rounded-pill mt-3 mt-md-0 d-flex align-items-center gap-1">
+                    <i class="bi bi-calendar2-plus"></i>
+                    <span>Book Consultation</span>
+                </a>
+            </div>
+
+            <div class="row g-4">
+                {% for doc in doctors %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="doctor-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-4 shadow-sm" style="width: 56px; height: 56px; flex-shrink: 0;">
+                                    <i class="bi bi-person-badge"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold mb-1 text-dark">{{ doc.name }}</h5>
+                                    <span class="badge bg-primary-subtle text-primary fw-semibold">{{ doc.specialization.name|default:"Specialist" }}</span>
+                                </div>
+                            </div>
+                            <p class="small text-dark mb-1"><strong>{{ doc.designation }}</strong></p>
+                            <p class="small text-muted mb-2"><i class="bi bi-mortarboard me-1 text-primary"></i>{{ doc.degrees }}</p>
+                            <p class="small text-muted mb-0"><i class="bi bi-door-open me-1 text-info"></i>{{ doc.room_number }} &nbsp;|&nbsp; <i class="bi bi-clock me-1 text-warning"></i>{{ doc.visiting_hours }}</p>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3">
+                            <span class="fw-bold text-primary fs-5">৳{{ doc.consultation_fee }} <small class="text-muted fs-6 fw-normal">Fee</small></span>
+                            <a href="#appointment-booking" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold d-flex align-items-center gap-1">
+                                <i class="bi bi-check2"></i> Book Serial
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center text-muted py-4">No doctors registered yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Lab Tests Showcase -->
+    <section class="py-5" id="diagnostics">
+        <div class="container py-4">
+            <div class="text-center max-w-700 mx-auto mb-5">
+                <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill fw-bold mb-2">DIAGNOSTIC & PATHOLOGY</span>
+                <h2 class="fw-bold text-dark">Diagnostic Lab Tests & Services</h2>
+                <p class="text-muted">International standard pathology, radiology, and biochemistry testing with fast report delivery.</p>
+            </div>
+
+            <div class="row g-3">
+                {% for test in tests %}
+                <div class="col-lg-3 col-md-4 col-sm-6">
+                    <div class="p-3 bg-white border rounded-3 shadow-xs h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <span class="badge bg-light text-secondary border small mb-2">{{ test.category.name|default:"Diagnostic Test" }}</span>
+                            <h6 class="fw-bold text-dark mb-1">{{ test.name }}</h6>
+                            <small class="text-muted d-block font-monospace">Code: {{ test.test_code }}</small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                            <strong class="text-primary fs-6">৳{{ test.price }}</strong>
+                            <span class="badge bg-success-subtle text-success small">Available</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center text-muted py-4">No tests cataloged yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer-custom">
+        <div class="container">
+            <div class="row g-4 pb-5 border-bottom border-secondary border-opacity-25">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="p-2 bg-primary text-white rounded-3">
+                            <i class="bi bi-hospital fs-4"></i>
+                        </div>
+                        <h5 class="fw-bold text-white mb-0">{{ hospital_setting.hospital_name|default:"WebKoders Healthcare" }}</h5>
+                    </div>
+                    <p class="small text-white mb-3" style="color: #ffffff !important; opacity: 0.9;">
+                        Specialized healthcare management and hospital automation software engineered by WebKoders.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="https://facebook.com" target="_blank" class="btn btn-sm btn-dark text-white border-secondary rounded-circle"><i class="bi bi-facebook"></i></a>
+                        <a href="https://linkedin.com" target="_blank" class="btn btn-sm btn-dark text-white border-secondary rounded-circle"><i class="bi bi-linkedin"></i></a>
+                        <a href="https://youtube.com" target="_blank" class="btn btn-sm btn-dark text-white border-secondary rounded-circle"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-6">
+                    <h6 class="text-white fw-bold mb-3">Clinical Modules</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2 small">
+                        <li><a href="#modules" class="text-white text-decoration-none" style="color: #ffffff !important;">Patient EHR</a></li>
+                        <li><a href="#modules" class="text-white text-decoration-none" style="color: #ffffff !important;">OPD Tokens</a></li>
+                        <li><a href="#modules" class="text-white text-decoration-none" style="color: #ffffff !important;">Diagnostic LIS</a></li>
+                        <li><a href="#modules" class="text-white text-decoration-none" style="color: #ffffff !important;">Pharmacy POS</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-6">
+                    <h6 class="text-white fw-bold mb-3">Quick Links</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2 small">
+                        <li><a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#quickLoginModal" class="text-white text-decoration-none" style="color: #ffffff !important;">Staff Login</a></li>
+                        <li><a href="{% url 'dashboard' %}" class="text-white text-decoration-none" style="color: #ffffff !important;">ERP Dashboard</a></li>
+                        <li><a href="/admin/" target="_blank" class="text-white text-decoration-none" style="color: #ffffff !important;">Admin Panel</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-4">
+                    <h6 class="text-white fw-bold mb-3">Helpline & Support</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2 small" style="color: #ffffff !important;">
+                        <li style="color: #ffffff !important;"><i class="bi bi-geo-alt text-info me-2"></i> {{ hospital_setting.address|default:"437 Shahid Jahanara Imam Road, New Elephant Road, Dhaka-1205" }}</li>
+                        <li style="color: #ffffff !important;"><i class="bi bi-telephone text-info me-2"></i> {{ hospital_setting.helpline_number|default:"+880 1700-000000" }}</li>
+                        <li style="color: #ffffff !important;"><i class="bi bi-envelope text-info me-2"></i> {{ hospital_setting.email|default:"support@hospitalsoftwarebd.com" }}</li>
+                        <li style="color: #ffffff !important;"><i class="bi bi-clock text-info me-2"></i> 24/7 Emergency & Medical Support</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-4 text-center text-white small" style="color: #ffffff !important;">
+                &copy; {% now "Y" %} {{ hospital_setting.hospital_name|default:"Hospital Management System" }}. All Rights Reserved. | Powered by <a href="https://webkoders.com" target="_blank" class="text-info text-decoration-none fw-semibold">WebKoders</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Quick Login Popup Modal -->
+    <div class="modal fade" id="quickLoginModal" tabindex="-1" aria-labelledby="quickLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+            <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+                <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-3 bg-primary text-white d-flex align-items-center justify-content-center shadow-xs" style="width: 36px; height: 36px; font-size: 1.15rem;">
+                            <i class="bi bi-hospital"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark" id="quickLoginModalLabel">{{ hospital_setting.hospital_name|default:"Hospital Management System" }}</h6>
+                            <span class="badge bg-primary-subtle text-primary" style="font-size: 0.68rem;">STAFF AUTHENTICATION</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body px-4 pt-3 pb-4">
+                    <p class="text-muted small mb-3">Sign in with your authorized credentials to access your ERP portal.</p>
+
+                    <form method="POST" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark mb-1">Username / Staff ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+                                <input type="text" name="username" id="modalUsername" class="form-control border-start-0 ps-1" placeholder="e.g. admin" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-bold text-dark mb-0">Password</label>
+                                <a href="javascript:void(0)" onclick="toggleModalPasswordVisibility()" class="text-decoration-none text-muted small" style="font-size: 0.75rem;">
+                                    <i class="bi bi-eye" id="modalToggleIcon"></i> <span id="modalToggleText">Show</span>
+                                </a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-shield-key text-muted"></i></span>
+                                <input type="password" name="password" id="modalPassword" class="form-control border-start-0 ps-1" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mt-2">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            <span>Sign In to Dashboard</span>
+                        </button>
+                    </form>
+
+                    <!-- Quick Role Selection -->
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-muted fw-semibold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Quick 1-Click Role Login:</span>
+                            <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 0.68rem;">Autofill</span>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="p-2 border rounded-3 bg-light text-center cursor-pointer demo-role-btn" style="cursor: pointer;" onclick="fillModalDemo('admin', 'admin123')">
+                                    <small class="fw-bold text-dark d-block"><i class="bi bi-shield-check text-primary me-1"></i>Admin</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 border rounded-3 bg-light text-center cursor-pointer demo-role-btn" style="cursor: pointer;" onclick="fillModalDemo('reception', 'reception123')">
+                                    <small class="fw-bold text-dark d-block"><i class="bi bi-headset text-success me-1"></i>Reception</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 border rounded-3 bg-light text-center cursor-pointer demo-role-btn" style="cursor: pointer;" onclick="fillModalDemo('dr_rafiq', 'doctor123')">
+                                    <small class="fw-bold text-dark d-block"><i class="bi bi-person-badge text-info me-1"></i>Dr. Rafiq</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 border rounded-3 bg-light text-center cursor-pointer demo-role-btn" style="cursor: pointer;" onclick="fillModalDemo('labtech', 'lab123')">
+                                    <small class="fw-bold text-dark d-block"><i class="bi bi-virus text-warning me-1"></i>Lab Tech</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3 pt-2">
+                        <small class="text-muted" style="font-size: 0.75rem;">
+                            <i class="bi bi-shield-lock text-success me-1"></i>256-Bit SSL Encrypted Hospital Intranet
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Clean any leftover Google Translate cookies or injected frames
+        (function() {
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=" + window.location.hostname + "; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=." + window.location.hostname + "; path=/;";
+            
+            const removeGoogleBanners = function() {
+                const banners = document.querySelectorAll('.goog-te-banner-frame, iframe[name^="goog"], #goog-gt-tt, .skiptranslate');
+                banners.forEach(el => {
+                    if (el && el.parentNode) {
+                        el.parentNode.removeChild(el);
+                    }
+                });
+                document.body.style.top = '0px';
+                document.body.style.position = 'static';
+            };
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', removeGoogleBanners);
+            } else {
+                removeGoogleBanners();
+            }
+        })();
+
+        function fillModalDemo(username, password) {
+            const userInput = document.getElementById('modalUsername');
+            const passInput = document.getElementById('modalPassword');
+            if (userInput && passInput) {
+                userInput.value = username;
+                passInput.value = password;
+                userInput.classList.add('border-primary');
+                passInput.classList.add('border-primary');
+                setTimeout(() => {
+                    userInput.classList.remove('border-primary');
+                    passInput.classList.remove('border-primary');
+                }, 800);
+            }
+        }
+
+        function toggleModalPasswordVisibility() {
+            const passInput = document.getElementById('modalPassword');
+            const toggleIcon = document.getElementById('modalToggleIcon');
+            const toggleText = document.getElementById('modalToggleText');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                toggleIcon.className = 'bi bi-eye-slash';
+                toggleText.innerText = 'Hide';
+            } else {
+                passInput.type = 'password';
+                toggleIcon.className = 'bi bi-eye';
+                toggleText.innerText = 'Show';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Smooth scrolling for all anchor links without layout jump
+
+            // Smooth scrolling for all anchor links without layout jump
+            document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+                anchor.addEventListener('click', function(e) {
+                    const targetId = this.getAttribute('href');
+                    if (targetId && targetId !== '#' && targetId.length > 1) {
+                        const target = document.querySelector(targetId);
+                        if (target) {
+                            e.preventDefault();
+                            const navHeight = document.querySelector('.navbar-custom')?.offsetHeight || 75;
+                            const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                            window.scrollTo({
+                                top: targetPosition,
+                                behavior: 'smooth'
+                            });
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

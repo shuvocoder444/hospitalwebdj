@@ -1,0 +1,74 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Order No</th>
+                <th>Patient</th>
+                <th>Referred By</th>
+                <th>Tests Included</th>
+                <th>Bill (Payable / Paid)</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ord in orders %}
+            <tr>
+                <td class="font-monospace fw-bold text-primary">{{ ord.order_no }}</td>
+                <td>
+                    <div class="fw-semibold">{{ ord.patient.name }}</div>
+                    <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ ord.patient.phone }}</small>
+                </td>
+                <td>
+                    {% if ord.referred_by_doctor %}
+                        Dr. {{ ord.referred_by_doctor.name }}
+                    {% elif ord.external_doctor_name %}
+                        {{ ord.external_doctor_name }} (Ext)
+                    {% else %}
+                        <span class="text-muted">Self / OPD</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% for item in ord.items.all %}
+                        <span class="badge bg-light text-dark border">{{ item.test.test_code }}</span>
+                    {% endfor %}
+                </td>
+                <td>
+                    <strong>৳{{ ord.payable_amount }}</strong>
+                    {% if ord.due_amount > 0 %}
+                        <span class="badge badge-soft-danger ms-1">Due: ৳{{ ord.due_amount }}</span>
+                    {% else %}
+                        <span class="badge badge-soft-success ms-1">Paid</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if ord.status == 'Completed' %}
+                        <span class="badge badge-soft-success"><i class="bi bi-check-circle me-1"></i>Ready</span>
+                    {% elif ord.status == 'Sample Collected' %}
+                        <span class="badge badge-soft-info"><i class="bi bi-eyedropper me-1"></i>Sample In</span>
+                    {% else %}
+                        <span class="badge badge-soft-warning">{{ ord.status }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'lab_result_entry' ord.id %}" class="btn btn-sm btn-outline-primary" title="Enter / Edit Test Results">
+                            <i class="bi bi-pencil-square me-1"></i> Results
+                        </a>
+                        <a href="{% url 'lab_report_print' ord.id %}" target="_blank" class="btn btn-sm btn-success" title="Print Report">
+                            <i class="bi bi-printer"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="bi bi-clipboard2-x fs-1 text-secondary d-block mb-2"></i>
+                    No lab orders found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

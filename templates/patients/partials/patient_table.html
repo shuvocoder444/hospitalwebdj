@@ -1,0 +1,83 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 140px;">Patient ID</th>
+                <th>Patient Name</th>
+                <th>Gender / Age</th>
+                <th>Status</th>
+                <th>Blood Group</th>
+                <th>Phone Number</th>
+                <th>Address</th>
+                <th class="text-end" style="width: 170px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in patients %}
+            <tr>
+                <td style="width: 120px;">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace px-2 py-1" style="font-size: 0.84rem; letter-spacing: 0.03em;">
+                        {{ p.patient_id }}
+                    </span>
+                </td>
+                <td>
+                    <div class="fw-bold text-dark">{{ p.name }}</div>
+                    <small class="text-muted">Registered: {{ p.created_at|date:"d M Y" }}</small>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark border">{{ p.gender }}</span>, {{ p.age_years }}y {% if p.age_months %}{{ p.age_months }}m{% endif %}
+                </td>
+                <td>
+                    {% if p.admissions.all %}
+                        {% for adm in p.admissions.all %}
+                            {% if adm.status == 'Admitted' %}
+                                <span class="badge badge-soft-danger"><i class="bi bi-hospital me-1"></i>Admitted</span>
+                            {% elif forloop.last and adm.status == 'Discharged' %}
+                                <span class="badge badge-soft-secondary">Discharged</span>
+                            {% endif %}
+                        {% endfor %}
+                    {% elif p.appointments.all %}
+                        <span class="badge badge-soft-info"><i class="bi bi-person-walking me-1"></i>Outdoor</span>
+                    {% else %}
+                        <span class="badge badge-soft-success">Active</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if p.blood_group and p.blood_group != 'Unknown' %}
+                        <span class="badge bg-danger-subtle text-danger fw-bold px-2 py-1">{{ p.blood_group }}</span>
+                    {% else %}
+                        <span class="text-muted small">N/A</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        <i class="bi bi-telephone text-success small"></i>
+                        <span>{{ p.phone }}</span>
+                    </div>
+                </td>
+                <td>
+                    <small class="text-muted">{{ p.address|default:"—"|truncatechars:30 }}</small>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex justify-content-end gap-1">
+                        <a href="{% url 'patient_detail' p.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                            <i class="bi bi-folder2-open me-1"></i> Profile
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center py-5 text-muted">
+                    <i class="bi bi-person-x fs-1 text-secondary d-block mb-2"></i>
+                    <h6 class="fw-bold text-dark">No Patients Found</h6>
+                    <p class="small text-muted mb-3">No patient records match the selected filter criteria.</p>
+                    <a href="{% url 'patient_create' %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">
+                        <i class="bi bi-person-plus-fill me-1"></i> Register New Patient
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

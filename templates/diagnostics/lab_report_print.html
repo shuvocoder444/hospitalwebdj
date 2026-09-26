@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block title %}Lab Report - {{ order.order_no }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .report-paper {
+        background: #ffffff;
+        width: 100%;
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+        min-height: 1050px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .report-header {
+        border-bottom: 2px solid #0284c7;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .patient-table {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        font-size: 0.92rem;
+        margin-bottom: 25px;
+    }
+    .patient-table td {
+        padding: 6px 12px;
+    }
+    .report-title {
+        background: #0284c7;
+        color: #ffffff;
+        text-align: center;
+        padding: 6px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        font-size: 0.95rem;
+    }
+    .results-table th {
+        background-color: #f1f5f9;
+        font-size: 0.88rem;
+        text-transform: uppercase;
+    }
+    .flag-high { color: #dc2626; font-weight: bold; }
+    .flag-low { color: #ea580c; font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <h4 class="fw-bold mb-1">Diagnostic Laboratory Report</h4>
+        <p class="text-muted mb-0">Order: <strong class="text-primary font-monospace">{{ order.order_no }}</strong></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'lab_orders_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Orders
+        </a>
+        <button onclick="window.print()" class="btn btn-primary shadow-sm">
+            <i class="bi bi-printer-fill me-1"></i> Print Diagnostic Report
+        </button>
+    </div>
+</div>
+
+<div class="report-paper">
+    <div>
+        <!-- PDF Letterhead Banner (if uploaded in settings) -->
+        {% if hospital_setting.pdf_header_banner %}
+        <div class="mb-3 text-center">
+            <img src="{{ hospital_setting.pdf_header_banner.url }}" alt="Header Banner" style="max-width: 100%; max-height: 110px;" class="rounded">
+        </div>
+        {% else %}
+        <!-- Default Diagnostic Center Header -->
+        <div class="report-header text-center">
+            <div class="d-flex justify-content-center align-items-center gap-2 mb-1">
+                {% if hospital_setting.logo %}
+                <img src="{{ hospital_setting.logo.url }}" alt="Logo" style="max-height: 45px;">
+                {% endif %}
+                <h3 class="fw-bold text-primary mb-0">{{ hospital_setting.hospital_name|default:"WebKoders Healthcare" }}</h3>
+            </div>
+            <p class="text-dark fw-semibold mb-0">{{ hospital_setting.hospital_tagline|default:"CLINICAL LABORATORY & DIAGNOSTIC CENTER" }}</p>
+            <small class="text-muted">{{ hospital_setting.address }} | Helpline: {{ hospital_setting.phone }}</small>
+        </div>
+        {% endif %}
+
+        <!-- Patient Demographics Info Table -->
+        <table class="table table-bordered patient-table">
+            <tbody>
+                <tr>
+                    <td style="width: 18%;"><strong>Patient ID:</strong></td>
+                    <td style="width: 32%;" class="font-monospace text-primary fw-bold">{{ order.patient.patient_id }}</td>
+                    <td style="width: 18%;"><strong>Order No:</strong></td>
+                    <td style="width: 32%;" class="font-monospace fw-bold">{{ order.order_no }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Patient Name:</strong></td>
+                    <td class="fw-bold">{{ order.patient.name }}</td>
+                    <td><strong>Age / Gender:</strong></td>
+                    <td>{{ order.patient.age_years }} Yrs {{ order.patient.age_months }} M / {{ order.patient.gender }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Referred By:</strong></td>
+                    <td>
+                        {% if order.referred_by_doctor %}
+                            Dr. {{ order.referred_by_doctor.name }} ({{ order.referred_by_doctor.degrees }})
+                        {% elif order.external_doctor_name %}
+                            {{ order.external_doctor_name }}
+                        {% else %}
+                            Self / General
+                        {% endif %}
+                    </td>
+                    <td><strong>Sample Date:</strong></td>
+                    <td>{{ order.created_at|date:"d M Y, h:i A" }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="report-title">DEPARTMENT OF PATHOLOGY & BIOCHEMISTRY</div>
+
+        <!-- Test Results Tables -->
+        {% for item in order.items.all %}
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2 bg-light p-2 border-start border-4 border-primary">
+                <strong class="text-dark">{{ item.test.name }} ({{ item.test.test_code }})</strong>
+                <small class="text-muted">Specimen: {{ item.test.specimen }}</small>
+            </div>
+
+            <table class="table table-sm table-bordered results-table align-middle mb-2">
+                <thead>
+                    <tr>
+                        <th style="width: 35%;">Investigation / Parameter</th>
+                        <th style="width: 25%;" class="text-center">Observed Value</th>
+                        <th style="width: 15%;" class="text-center">Unit</th>
+                        <th style="width: 25%;">Standard Normal Range</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in item.results.all %}
+                    <tr>
+                        <td class="fw-medium">{{ res.parameter.name }}</td>
+                        <td class="text-center">
+                            <span class="fs-6 {% if res.flag == 'High' %}flag-high{% elif res.flag == 'Low' %}flag-low{% else %}fw-bold text-dark{% endif %}">
+                                {{ res.result_value|default:"Pending" }}
+                            </span>
+                            {% if res.flag == 'High' %}<small class="badge bg-danger ms-1">High</small>{% endif %}
+                            {% if res.flag == 'Low' %}<small class="badge bg-warning text-dark ms-1">Low</small>{% endif %}
+                        </td>
+                        <td class="text-center text-muted font-monospace">{{ res.parameter.unit|default:"—" }}</td>
+                        <td class="small text-muted font-monospace">{{ res.parameter.reference_range|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">Results pending or qualitative exam completed.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Signatures Footer -->
+    <div class="pt-4 border-top">
+        <div class="row text-center mt-4">
+            <div class="col-4">
+                <div style="border-bottom: 1px solid #64748b; margin: 0 20px; height: 35px;"></div>
+                <small class="fw-bold d-block mt-1">Medical Technologist (Lab)</small>
+            </div>
+            <div class="col-4">
+                <div style="border-bottom: 1px solid #64748b; margin: 0 20px; height: 35px;"></div>
+                <small class="fw-bold d-block mt-1">Checked By</small>
+            </div>
+            <div class="col-4">
+                {% if hospital_setting.authorized_signature_seal %}
+                <img src="{{ hospital_setting.authorized_signature_seal.url }}" alt="Seal" style="max-height: 40px;" class="mb-1">
+                {% else %}
+                <div style="border-bottom: 1px solid #64748b; margin: 0 20px; height: 35px;"></div>
+                {% endif %}
+                <small class="fw-bold d-block mt-1">Consultant Pathologist / Biochemist</small>
+            </div>
+        </div>
+        <div class="text-center text-muted mt-3" style="font-size: 0.75rem;">
+            {{ hospital_setting.lab_report_footer_note|default:"* This is an authorized digital diagnostic laboratory report. For any query please contact lab reception." }}
+        </div>
+    </div>
+</div>
+{% endblock %}

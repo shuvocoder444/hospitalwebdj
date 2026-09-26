@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ patient.name }} - Medical Profile{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-person-vcard text-primary me-2"></i>Patient Electronic Medical Profile (EHR)</h4>
+        <p class="text-muted mb-0">ID: <strong class="text-primary font-monospace">{{ patient.patient_id }}</strong> | Registered: {{ patient.created_at|date:"d M Y" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'appointment_create' %}?patient_id={{ patient.pk }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-calendar-plus me-1"></i> Book OPD
+        </a>
+        <a href="{% url 'lab_order_create' %}?patient_id={{ patient.pk }}" class="btn btn-sm btn-info text-white">
+            <i class="bi bi-clipboard2-plus me-1"></i> Book Lab Test
+        </a>
+        <a href="{% url 'admission_create' %}?patient_id={{ patient.pk }}" class="btn btn-sm btn-warning">
+            <i class="bi bi-door-open me-1"></i> Admit to IPD
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Patient Profile Card -->
+    <div class="col-lg-4">
+        <div class="card card-custom h-100">
+            <div class="card-header bg-light">
+                <span class="fw-bold text-dark"><i class="bi bi-person-lines-fill me-2"></i>Patient Information</span>
+            </div>
+            <div class="card-body">
+                <div class="text-center pb-3 border-bottom mb-3">
+                    <div class="d-inline-flex p-3 rounded-circle bg-primary-subtle text-primary fs-2 mb-2">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0">{{ patient.name }}</h5>
+                    <span class="badge bg-secondary mt-1">{{ patient.gender }} | {{ patient.age_years }} Years</span>
+                    {% if patient.blood_group != 'Unknown' %}
+                        <span class="badge bg-danger ms-1">Blood: {{ patient.blood_group }}</span>
+                    {% endif %}
+                </div>
+
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-2 small">
+                    <li><strong class="text-muted d-block">Phone:</strong> <i class="bi bi-telephone text-primary me-1"></i>{{ patient.phone }}</li>
+                    <li><strong class="text-muted d-block">Email:</strong> {{ patient.email|default:"N/A" }}</li>
+                    <li><strong class="text-muted d-block">NID / Birth Cert:</strong> {{ patient.nid_or_birth_cert|default:"N/A" }}</li>
+                    <li><strong class="text-muted d-block">Present Address:</strong> {{ patient.address|default:"Not specified" }}</li>
+                    <li><strong class="text-muted d-block">Emergency Contact:</strong> {{ patient.emergency_contact_name|default:"N/A" }} ({{ patient.emergency_contact_relation|default:"—" }}) - {{ patient.emergency_contact_phone|default:"—" }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="col-lg-8">
+        <div class="row g-3 mb-3">
+            <div class="col-sm-3">
+                <div class="stat-card p-3 text-center">
+                    <span class="text-muted small">OPD Visits</span>
+                    <h4 class="fw-bold my-1 text-primary">{{ appointments.count }}</h4>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="stat-card p-3 text-center">
+                    <span class="text-muted small">Prescriptions</span>
+                    <h4 class="fw-bold my-1 text-info">{{ prescriptions.count }}</h4>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="stat-card p-3 text-center">
+                    <span class="text-muted small">Lab Reports</span>
+                    <h4 class="fw-bold my-1 text-success">{{ lab_orders.count }}</h4>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="stat-card p-3 text-center">
+                    <span class="text-muted small">Admissions</span>
+                    <h4 class="fw-bold my-1 text-warning">{{ admissions.count }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tabs -->
+        <div class="card card-custom">
+            <div class="card-header p-0 bg-light">
+                <ul class="nav nav-tabs card-header-tabs m-0 px-3" id="patientTabs" role="tablist">
+                    <li class="nav-item"><a class="nav-link active py-3" data-bs-toggle="tab" href="#tab-prescriptions"><i class="bi bi-file-earmark-medical me-1"></i> Prescriptions</a></li>
+                    <li class="nav-item"><a class="nav-link py-3" data-bs-toggle="tab" href="#tab-lab"><i class="bi bi-clipboard2-pulse me-1"></i> Lab Tests</a></li>
+                    <li class="nav-item"><a class="nav-link py-3" data-bs-toggle="tab" href="#tab-admissions"><i class="bi bi-hospital me-1"></i> IPD Admissions</a></li>
+                    <li class="nav-item"><a class="nav-link py-3" data-bs-toggle="tab" href="#tab-bills"><i class="bi bi-receipt me-1"></i> Invoices</a></li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="patientTabContent">
+                    <!-- Prescriptions Tab -->
+                    <div class="tab-pane fade show active" id="tab-prescriptions">
+                        {% for rx in prescriptions %}
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong class="text-primary">{{ rx.prescription_no }}</strong>
+                                    <span class="text-muted small ms-2">Dr. {{ rx.doctor.name }} ({{ rx.doctor.specialization.name }})</span>
+                                </div>
+                                <span class="badge bg-white text-dark border">{{ rx.created_at|date:"d M Y" }}</span>
+                            </div>
+                            <div class="small mb-2"><strong>Diagnosis:</strong> {{ rx.diagnosis|default:"General consultation" }}</div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered bg-white mb-0">
+                                    <thead>
+                                        <tr class="table-light"><th>Medicine (Rx)</th><th>Dosage</th><th>Duration</th><th>Instruction</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for m in rx.medicines.all %}
+                                        <tr>
+                                            <td><strong>{{ m.medicine_name }}</strong></td>
+                                            <td>{{ m.dosage }}</td>
+                                            <td>{{ m.duration }}</td>
+                                            <td>{{ m.instruction }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="4" class="text-center text-muted">No medicines added.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-end mt-2">
+                                <a href="{% url 'prescription_detail' rx.id %}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-printer me-1"></i> Print Rx</a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center py-4 mb-0">No prescriptions recorded yet.</p>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Lab Tests Tab -->
+                    <div class="tab-pane fade" id="tab-lab">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order No</th>
+                                        <th>Tests Ordered</th>
+                                        <th>Total Fee</th>
+                                        <th>Status</th>
+                                        <th>Report Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in lab_orders %}
+                                    <tr>
+                                        <td class="font-monospace fw-bold">{{ order.order_no }}</td>
+                                        <td>
+                                            {% for item in order.items.all %}
+                                                <span class="badge bg-light text-dark border">{{ item.test.test_code }}</span>
+                                            {% endfor %}
+                                        </td>
+                                        <td>৳{{ order.payable_amount }}</td>
+                                        <td><span class="badge badge-soft-info">{{ order.status }}</span></td>
+                                        <td>
+                                            <a href="{% url 'lab_report_print' order.id %}" target="_blank" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-file-earmark-text"></i> View Report
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="text-center text-muted py-4">No diagnostic test orders recorded.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- IPD Admissions Tab -->
+                    <div class="tab-pane fade" id="tab-admissions">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Admission No</th>
+                                        <th>Bed / Cabin</th>
+                                        <th>Doctor</th>
+                                        <th>Admission Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for adm in admissions %}
+                                    <tr>
+                                        <td class="font-monospace fw-bold">{{ adm.admission_no }}</td>
+                                        <td><span class="badge bg-primary-subtle text-primary">{{ adm.bed.bed_number }}</span> ({{ adm.bed.ward_type.name }})</td>
+                                        <td>Dr. {{ adm.admitted_under_doctor.name }}</td>
+                                        <td>{{ adm.admission_date|date:"d M Y, h:i A" }}</td>
+                                        <td>
+                                            {% if adm.status == 'Admitted' %}
+                                                <span class="badge badge-soft-warning">Active Stay</span>
+                                            {% else %}
+                                                <span class="badge badge-soft-success">Discharged</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="text-center text-muted py-4">No inpatient admissions recorded.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Invoices Tab -->
+                    <div class="tab-pane fade" id="tab-bills">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Invoice No</th>
+                                        <th>Bill Type</th>
+                                        <th>Payable</th>
+                                        <th>Paid</th>
+                                        <th>Due</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for inv in invoices %}
+                                    <tr>
+                                        <td class="font-monospace">{{ inv.invoice_no }}</td>
+                                        <td><span class="badge bg-light text-dark border">{{ inv.get_bill_type_display }}</span></td>
+                                        <td><strong>৳{{ inv.payable_amount }}</strong></td>
+                                        <td class="text-success">৳{{ inv.paid_amount }}</td>
+                                        <td class="text-danger">৳{{ inv.due_amount }}</td>
+                                        <td>
+                                            {% if inv.payment_status == 'Paid' %}
+                                                <span class="badge badge-soft-success">Paid</span>
+                                            {% else %}
+                                                <span class="badge badge-soft-danger">Due</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'invoice_detail' inv.id %}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-printer"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="7" class="text-center text-muted py-4">No billing records found.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

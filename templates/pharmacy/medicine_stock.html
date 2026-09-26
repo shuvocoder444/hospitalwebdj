@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block title %}Medicine Inventory & Stock Management{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-capsule-pill text-primary me-2"></i>Pharmacy Medicine Stock</h4>
+        <p class="text-muted mb-0">Manage pharmaceutical inventory, stock batches, expiry dates and reorder levels.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary shadow-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addMedicineModal">
+            <i class="bi bi-plus-circle me-1"></i> Add New Medicine
+        </button>
+        <a href="{% url 'pharmacy_pos' %}" class="btn btn-outline-primary bg-white shadow-sm rounded-pill px-3">
+            <i class="bi bi-cart3 me-1"></i> POS Counter
+        </a>
+    </div>
+</div>
+
+<div class="card card-custom">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h6 class="fw-bold mb-0 text-dark">All Registered Medicines (Total: {{ medicines.count }})</h6>
+        <div class="d-flex gap-2">
+            <input type="text" id="medSearch" class="form-control form-control-sm rounded-pill" placeholder="Search medicine or generic..." style="max-width: 250px;" onkeyup="filterMedicineTable()">
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 table-custom" id="medTable">
+                <thead>
+                    <tr>
+                        <th>Brand Name & Strength</th>
+                        <th>Generic Name</th>
+                        <th>Category</th>
+                        <th>Company</th>
+                        <th>MRP Unit Price</th>
+                        <th>Active Batches & Expiry</th>
+                        <th>Total Stock</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in medicines %}
+                    <tr>
+                        <td>
+                            <strong class="text-dark fs-6">{{ m.brand_name }}</strong>
+                            {% if m.strength %}
+                                <span class="badge bg-light text-primary border ms-1">{{ m.strength }}</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ m.generic.name|default:"-" }}</span></td>
+                        <td><span class="badge badge-soft-info">{{ m.category.name|default:"General" }}</span></td>
+                        <td><small class="text-muted">{{ m.company_name|default:"-" }}</small></td>
+                        <td><strong class="text-dark">৳{{ m.unit_price }}</strong></td>
+                        <td>
+                            {% for b in m.batches.all %}
+                            <div class="small font-monospace mb-1">
+                                <span class="badge bg-light text-dark border">#{{ b.batch_number }}</span>: {{ b.quantity_in_stock }} pcs
+                                (Exp: <span class="{% if b.expiry_date < today %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ b.expiry_date|date:"d M Y" }}</span>)
+                            </div>
+                            {% empty %}
+                            <span class="text-muted small">No active batches</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if m.total_stock <= m.reorder_level %}
+                                <span class="badge badge-soft-danger fs-6">{{ m.total_stock }} pcs <i class="bi bi-exclamation-triangle ms-1"></i></span>
+                            {% else %}
+                                <span class="badge badge-soft-success fs-6">{{ m.total_stock }} pcs</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addBatchModal{{ m.id }}">
+                                <i class="bi bi-plus me-1"></i> Add Stock
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Modal for Adding Stock Batch to this Medicine -->
+                    <div class="modal fade" id="addBatchModal{{ m.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content rounded-4 border-0 shadow">
+                                <div class="modal-header border-0 bg-light">
+                                    <h5 class="modal-title fw-bold"><i class="bi bi-box-seam text-primary me-2"></i>Add Stock Batch for {{ m.brand_name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" action="{% url 'medicine_add_batch' m.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-body p-4">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Batch Number <span class="text-danger">*</span></label>
+                                            <input type="text" name="batch_number" class="form-control" placeholder="e.g. BATCH-{{ today|date:'Ym' }}-01" required>
+                                        </div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label small fw-bold">Quantity <span class="text-danger">*</span></label>
+                                                <input type="number" name="quantity" class="form-control" placeholder="100" min="1" required>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small fw-bold">Expiry Date <span class="text-danger">*</span></label>
+                                                <input type="date" name="expiry_date" class="form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label small fw-bold">Purchase Cost / Unit</label>
+                                                <input type="number" step="0.01" name="purchase_cost" class="form-control" placeholder="0.00" value="0.00">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small fw-bold">Selling Price (MRP)</label>
+                                                <input type="number" step="0.01" name="selling_price" class="form-control" value="{{ m.unit_price }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 bg-light">
+                                        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Save Stock Batch</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-capsule fs-1 text-secondary d-block mb-2"></i>
+                            No medicine records found. Click "Add New Medicine" above to create one.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add New Medicine (Create Medicine) -->
+<div class="modal fade" id="addMedicineModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-capsule-pill text-primary me-2"></i>Create New Medicine</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'medicine_create' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Brand Name <span class="text-danger">*</span></label>
+                            <input type="text" name="brand_name" class="form-control" placeholder="e.g. Napa Extra, Maxpro, Seclo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Strength</label>
+                            <input type="text" name="strength" class="form-control" placeholder="e.g. 500mg, 20mg, 10ml">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Generic Name</label>
+                            <input type="text" name="generic" class="form-control" list="genericList" placeholder="e.g. Paracetamol + Caffeine, Esomeprazole">
+                            <datalist id="genericList">
+                                {% for g in generics %}
+                                <option value="{{ g.name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Category</label>
+                            <input type="text" name="category" class="form-control" list="categoryList" placeholder="e.g. Tablet, Capsule, Syrup, Injection">
+                            <datalist id="categoryList">
+                                {% for c in categories %}
+                                <option value="{{ c.name }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Pharmaceutical Company</label>
+                            <input type="text" name="company_name" class="form-control" placeholder="e.g. Square Pharmaceuticals, Beximco, Incepta">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">MRP Unit Price <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="unit_price" class="form-control" placeholder="0.00" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Reorder Alert Level</label>
+                            <input type="number" name="reorder_level" class="form-control" value="50">
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 mt-4">
+                        <h6 class="fw-bold mb-3 text-dark"><i class="bi bi-box-seam me-1 text-primary"></i>Initial Stock Batch</h6>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Batch Number</label>
+                                <input type="text" name="batch_number" class="form-control form-control-sm" placeholder="e.g. B-01">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Quantity (Pcs)</label>
+                                <input type="number" name="quantity_in_stock" class="form-control form-control-sm" placeholder="100">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Expiry Date</label>
+                                <input type="date" name="expiry_date" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Purchase Cost/pc</label>
+                                <input type="number" step="0.01" name="purchase_cost" class="form-control form-control-sm" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Create Medicine</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterMedicineTable() {
+    const filter = document.getElementById("medSearch").value.toUpperCase();
+    const trs = document.getElementById("medTable").getElementsByTagName("tr");
+    for (let i = 1; i < trs.length; i++) {
+        const text = trs[i].textContent || trs[i].innerText;
+        trs[i].style.display = text.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+    }
+}
+</script>
+{% endblock %}

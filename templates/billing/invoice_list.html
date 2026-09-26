@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Invoices & Billing Accounts - WebKoders ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-receipt-cutoff text-primary me-2"></i>Invoices & Billing Accounts</h4>
+        <p class="text-muted mb-0">Manage outdoor, indoor, lab tests and pharmacy billing records</p>
+    </div>
+    <a href="{% url 'invoice_create' %}" class="btn btn-primary shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> Create New Invoice
+    </a>
+</div>
+
+<!-- Financial Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <span class="text-muted small text-uppercase fw-bold">Total Invoiced</span>
+            <h3 class="fw-bold my-1 text-primary">৳{{ total_billed|intcomma }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <span class="text-muted small text-uppercase fw-bold">Total Cash Collected</span>
+            <h3 class="fw-bold my-1 text-success">৳{{ total_collected|intcomma }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <span class="text-muted small text-uppercase fw-bold">Total Outstanding Due</span>
+            <h3 class="fw-bold my-1 text-danger">৳{{ total_due|intcomma }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar with Instant HTMX Trigger -->
+<div class="card card-custom mb-4">
+    <div class="card-body p-3">
+        <form id="invoiceFilterForm" 
+              class="row g-2 align-items-center"
+              hx-get="{% url 'invoice_list' %}"
+              hx-trigger="keyup changed delay:250ms from:input[name='q'], change from:select"
+              hx-target="#invoiceTableContainer"
+              hx-indicator="#invIndicator">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="⚡ Instant Search by Invoice No, Patient Name, Phone or ID...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="type" class="form-select">
+                    <option value="">All Bill Types</option>
+                    <option value="OPD" {% if selected_type == 'OPD' %}selected{% endif %}>OPD Consultation</option>
+                    <option value="IPD" {% if selected_type == 'IPD' %}selected{% endif %}>IPD Admission</option>
+                    <option value="DIAGNOSTIC" {% if selected_type == 'DIAGNOSTIC' %}selected{% endif %}>Diagnostic Lab</option>
+                    <option value="PHARMACY" {% if selected_type == 'PHARMACY' %}selected{% endif %}>Pharmacy</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select">
+                    <option value="">All Payment Status</option>
+                    <option value="Paid" {% if selected_status == 'Paid' %}selected{% endif %}>Paid</option>
+                    <option value="Partial" {% if selected_status == 'Partial' %}selected{% endif %}>Partial Paid</option>
+                    <option value="Unpaid" {% if selected_status == 'Unpaid' %}selected{% endif %}>Unpaid / Due</option>
+                </select>
+            </div>
+            <div class="col-md-1 text-center">
+                <span id="invIndicator" class="spinner-border spinner-border-sm text-primary htmx-indicator" role="status"></span>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoice Table Container -->
+<div class="card card-custom">
+    <div class="card-body p-0" id="invoiceTableContainer">
+        {% include 'billing/partials/invoice_table.html' %}
+    </div>
+</div>
+{% endblock %}

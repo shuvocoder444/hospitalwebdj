@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Lab Result Entry - {{ order.order_no }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-eyedropper text-primary me-2"></i>Laboratory Result Entry</h4>
+        <p class="text-muted mb-0">Order: <strong class="text-primary font-monospace">{{ order.order_no }}</strong> | Patient: <strong>{{ order.patient.name }}</strong> ({{ order.patient.gender }}, {{ order.patient.age_years }}y)</p>
+    </div>
+    <a href="{% url 'lab_orders_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Orders
+    </a>
+</div>
+
+<div class="card card-custom">
+    <div class="card-body p-4">
+        <form method="POST">
+            {% csrf_token %}
+            {% for item in order.items.all %}
+            <div class="border rounded p-3 mb-4 bg-light">
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">{{ item.test.name }} ({{ item.test.test_code }})</h5>
+                        <small class="text-muted">Category: {{ item.test.category.name }} | Specimen: {{ item.test.specimen }}</small>
+                    </div>
+                    <span class="badge bg-primary">৳{{ item.test.price }}</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered bg-white align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 30%;">Test Parameter</th>
+                                <th style="width: 25%;">Result Value</th>
+                                <th style="width: 15%;">Unit</th>
+                                <th style="width: 15%;">Reference Range</th>
+                                <th style="width: 15%;">Flag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for res in item.results.all %}
+                            <tr>
+                                <td><strong>{{ res.parameter.name }}</strong></td>
+                                <td>
+                                    <input type="text" name="result_{{ res.id }}" value="{{ res.result_value|default:'' }}" class="form-control form-control-sm" placeholder="Enter findings / value" required>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">{{ res.parameter.unit|default:"—" }}</span></td>
+                                <td><small class="text-muted font-monospace">{{ res.parameter.reference_range|default:"—" }}</small></td>
+                                <td>
+                                    <select name="flag_{{ res.id }}" class="form-select form-select-sm">
+                                        <option value="Normal" {% if res.flag == 'Normal' %}selected{% endif %}>Normal</option>
+                                        <option value="High" {% if res.flag == 'High' %}selected{% endif %}>High</option>
+                                        <option value="Low" {% if res.flag == 'Low' %}selected{% endif %}>Low</option>
+                                        <option value="Positive" {% if res.flag == 'Positive' %}selected{% endif %}>Positive</option>
+                                        <option value="Negative" {% if res.flag == 'Negative' %}selected{% endif %}>Negative</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-muted text-center py-2">No parameter predefined for this test. Enter general comments below.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                <a href="{% url 'lab_orders_list' %}" class="btn btn-light border px-4">Cancel</a>
+                <button type="submit" class="btn btn-success px-5 fw-semibold shadow-sm">
+                    <i class="bi bi-check2-all me-1"></i> Save & Authorize Lab Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

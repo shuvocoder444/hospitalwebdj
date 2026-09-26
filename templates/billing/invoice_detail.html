@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% block title %}Invoice - {{ invoice.invoice_no }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .invoice-paper {
+        background: #ffffff;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+    .invoice-header {
+        border-bottom: 2px solid #0284c7;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .table-invoice th {
+        background-color: #f8fafc;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <h4 class="fw-bold mb-1">Money Receipt & Invoice View</h4>
+        <p class="text-muted mb-0">Invoice: <strong class="text-primary font-monospace">{{ invoice.invoice_no }}</strong></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Invoices
+        </a>
+        {% if invoice.due_amount > 0 %}
+        <button type="button" class="btn btn-warning shadow-sm" data-bs-toggle="modal" data-bs-target="#collectDueModal">
+            <i class="bi bi-cash me-1"></i> Collect Due
+        </button>
+        {% endif %}
+        <button onclick="window.print()" class="btn btn-primary shadow-sm">
+            <i class="bi bi-printer-fill me-1"></i> Print Invoice
+        </button>
+    </div>
+</div>
+
+<div class="invoice-paper">
+    <!-- Header -->
+    <div class="invoice-header d-flex justify-content-between align-items-start">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                {% if hospital_setting.logo %}
+                <img src="{{ hospital_setting.logo.url }}" alt="Logo" style="max-height: 40px;">
+                {% endif %}
+                <h3 class="fw-bold text-primary mb-0">{{ hospital_setting.hospital_name|default:"WebKoders Healthcare" }}</h3>
+            </div>
+            <p class="text-dark fw-semibold mb-0">{{ hospital_setting.hospital_tagline|default:"General Hospital & Diagnostic Center" }}</p>
+            <small class="text-muted d-block">{{ hospital_setting.address }}</small>
+            <small class="text-muted d-block">Phone: {{ hospital_setting.phone }} | Email: {{ hospital_setting.email }}</small>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-primary fs-6 px-3 py-2 mb-2 d-inline-block">MONEY RECEIPT</span>
+            <div class="fw-bold text-dark">Invoice: {{ invoice.invoice_no }}</div>
+            <small class="text-muted d-block">Date: {{ invoice.created_at|date:"d M Y, h:i A" }}</small>
+            <small class="badge {% if invoice.payment_status == 'Paid' %}badge-soft-success{% else %}badge-soft-danger{% endif %} mt-1">
+                Status: {{ invoice.payment_status }}
+            </small>
+        </div>
+    </div>
+
+    <!-- Patient Details -->
+    <div class="bg-light border rounded p-3 mb-4 small">
+        <div class="row g-2">
+            <div class="col-6">
+                <strong>Patient ID:</strong> <span class="font-monospace text-primary fw-bold">{{ invoice.patient.patient_id }}</span><br>
+                <strong>Patient Name:</strong> <span class="fw-bold text-dark">{{ invoice.patient.name }}</span><br>
+                <strong>Age / Sex:</strong> {{ invoice.patient.age_years }}y / {{ invoice.patient.gender }}
+            </div>
+            <div class="col-6 text-end">
+                <strong>Contact Phone:</strong> {{ invoice.patient.phone }}<br>
+                <strong>Bill Type:</strong> {{ invoice.get_bill_type_display }}<br>
+                <strong>Billed By:</strong> {{ invoice.created_by.get_full_name|default:invoice.created_by.username|default:"Reception" }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Items -->
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-invoice align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 25%;">Service Category</th>
+                    <th style="width: 40%;">Description</th>
+                    <th style="width: 10%;" class="text-center">Qty</th>
+                    <th style="width: 10%;" class="text-end">Rate</th>
+                    <th style="width: 10%;" class="text-end">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ item.item_type }}</span></td>
+                    <td class="fw-medium">{{ item.description }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-end">৳{{ item.unit_price }}</td>
+                    <td class="text-end fw-bold">৳{{ item.subtotal }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No line items.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Calculation Breakdown -->
+    <div class="row justify-content-end mb-4">
+        <div class="col-md-6">
+            <table class="table table-sm table-borderless small mb-0">
+                <tr>
+                    <td class="text-muted">Total Gross Amount:</td>
+                    <td class="text-end fw-bold">৳{{ invoice.total_amount }}</td>
+                </tr>
+                {% if invoice.discount_amount > 0 %}
+                <tr>
+                    <td class="text-muted">Discount:</td>
+                    <td class="text-end text-danger">-৳{{ invoice.discount_amount }}</td>
+                </tr>
+                {% endif %}
+                <tr class="border-top">
+                    <td class="fw-bold fs-6">Net Payable:</td>
+                    <td class="text-end fw-bold fs-6 text-primary">৳{{ invoice.payable_amount }}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-success">Total Paid:</td>
+                    <td class="text-end fw-bold text-success">৳{{ invoice.paid_amount }}</td>
+                </tr>
+                {% if invoice.due_amount > 0 %}
+                <tr class="border-top">
+                    <td class="fw-bold text-danger">Net Due:</td>
+                    <td class="text-end fw-bold text-danger fs-6">৳{{ invoice.due_amount }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Payment History -->
+    {% if invoice.payments.all %}
+    <div class="mb-4">
+        <h6 class="fw-bold small text-uppercase text-muted border-bottom pb-1">Payment Transactions</h6>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered small mb-0">
+                <thead class="table-light">
+                    <tr><th>Trx ID</th><th>Date</th><th>Method</th><th>Reference</th><th>Paid By / Amount</th><th>Received By</th></tr>
+                </thead>
+                <tbody>
+                    {% for p in invoice.payments.all %}
+                    <tr>
+                        <td class="font-monospace">{{ p.transaction_id }}</td>
+                        <td>{{ p.created_at|date:"d M Y, h:i A" }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ p.payment_method }}</span></td>
+                        <td>{{ p.transaction_reference|default:"Counter Cash" }}</td>
+                        <td class="fw-bold text-success">৳{{ p.amount_paid }}</td>
+                        <td>{{ p.received_by.username|default:"Cashier" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer & Signature -->
+    <div class="pt-4 border-top mt-5 d-flex justify-content-between align-items-end">
+        <small class="text-muted">{{ hospital_setting.invoice_footer_note|default:"* Payment is non-refundable. Please keep this money receipt for future reference." }}</small>
+        <div class="text-center" style="width: 200px;">
+            {% if hospital_setting.authorized_signature_seal %}
+            <img src="{{ hospital_setting.authorized_signature_seal.url }}" alt="Seal" style="max-height: 40px;" class="mb-1">
+            {% else %}
+            <div style="border-bottom: 1px solid #475569; height: 35px;"></div>
+            {% endif %}
+            <small class="fw-bold text-dark mt-1 d-block">Authorized Signature</small>
+        </div>
+    </div>
+</div>
+
+<!-- Collect Due Modal -->
+<div class="modal fade" id="collectDueModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'payment_collect' invoice.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Collect Due Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Invoice: <strong>{{ invoice.invoice_no }}</strong> | Current Due: <strong class="text-danger">৳{{ invoice.due_amount }}</strong></p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Amount to Collect <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" name="amount_paid" class="form-control" value="{{ invoice.due_amount }}" max="{{ invoice.due_amount }}" min="1" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Payment Method</label>
+                        <select name="payment_method" class="form-select">
+                            <option value="Cash">Cash</option>
+                            <option value="bKash">bKash</option>
+                            <option value="Nagad">Nagad</option>
+                            <option value="Rocket">Rocket</option>
+                            <option value="Card">Card</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Transaction Reference / Note</label>
+                        <input type="text" name="transaction_reference" class="form-control" placeholder="e.g. TrxID or Slip No">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success fw-semibold">Confirm Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

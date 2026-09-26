@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Pharmacy Receipt - {{ sale.invoice_no }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .thermal-receipt {
+        width: 380px;
+        margin: 20px auto;
+        background: #ffffff;
+        padding: 20px;
+        border: 1px dashed #cbd5e1;
+        font-family: 'Courier New', Courier, monospace;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .thermal-header {
+        text-align: center;
+        border-bottom: 1px dashed #000;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <h4 class="fw-bold mb-1">Pharmacy Cash Memo</h4>
+        <p class="text-muted mb-0">Memo No: <strong class="text-primary font-monospace">{{ sale.invoice_no }}</strong></p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'pharmacy_pos' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-cart-plus me-1"></i> New Sale
+        </a>
+        <button onclick="window.print()" class="btn btn-primary shadow-sm">
+            <i class="bi bi-printer-fill me-1"></i> Print Memo
+        </button>
+    </div>
+</div>
+
+<div class="thermal-receipt">
+    <div class="thermal-header">
+        <h5 class="fw-bold mb-0">HOSPITAL PHARMACY BD</h5>
+        <small class="d-block">Hospital Software BD, Dhaka</small>
+        <small class="d-block">Helpline: 01826027203</small>
+        <div class="mt-2 text-uppercase fw-bold" style="font-size: 0.85rem;">Cash Receipt / Memo</div>
+    </div>
+
+    <div class="small mb-2">
+        <div><strong>Memo No:</strong> {{ sale.invoice_no }}</div>
+        <div><strong>Date:</strong> {{ sale.created_at|date:"d/m/Y h:i A" }}</div>
+        <div><strong>Customer:</strong> {{ sale.customer_name|default:"Walk-in" }}</div>
+        {% if sale.customer_phone %}<div><strong>Phone:</strong> {{ sale.customer_phone }}</div>{% endif %}
+        <div><strong>Served By:</strong> {{ sale.sold_by.username|default:"Cashier" }}</div>
+    </div>
+
+    <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 5px 0; margin-bottom: 8px;">
+        <table style="width: 100%; font-size: 0.85rem;">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Item</th>
+                    <th style="text-align: center;">Qty</th>
+                    <th style="text-align: right;">Price</th>
+                    <th style="text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sale.items.all %}
+                <tr>
+                    <td style="text-align: left;">{{ item.batch.medicine.brand_name }}</td>
+                    <td style="text-align: center;">{{ item.quantity }}</td>
+                    <td style="text-align: right;">{{ item.unit_price }}</td>
+                    <td style="text-align: right;">{{ item.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="small">
+        <div class="d-flex justify-content-between"><span>Subtotal:</span><strong>৳{{ sale.total_amount }}</strong></div>
+        {% if sale.discount_amount > 0 %}
+        <div class="d-flex justify-content-between"><span>Discount:</span><span>-৳{{ sale.discount_amount }}</span></div>
+        {% endif %}
+        <div class="d-flex justify-content-between fw-bold border-top pt-1 mt-1 fs-6">
+            <span>Net Payable:</span><strong>৳{{ sale.net_amount }}</strong>
+        </div>
+        <div class="d-flex justify-content-between"><span>Paid:</span><strong>৳{{ sale.paid_amount }}</strong></div>
+        {% if sale.due_amount > 0 %}
+        <div class="d-flex justify-content-between text-danger"><span>Due:</span><strong>৳{{ sale.due_amount }}</strong></div>
+        {% endif %}
+    </div>
+
+    <div class="text-center mt-3 pt-2 border-top small" style="font-size: 0.75rem;">
+        * No return without cash memo.<br>Thank you for choosing us!
+    </div>
+</div>
+{% endblock %}

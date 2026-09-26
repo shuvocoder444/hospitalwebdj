@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — Doctor Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0" style="max-width: 900px;">
+    
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="{% url 'doctor_list' %}" class="text-decoration-none">Doctors Directory</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% if doctor %}Edit Doctor{% else %}Add Doctor{% endif %}</li>
+                </ol>
+            </nav>
+            <h4 class="fw-bold text-dark mb-0">
+                <i class="bi bi-person-plus-fill text-primary me-2"></i>{{ title }}
+            </h4>
+        </div>
+        <a href="{% url 'doctor_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i> Back to Directory
+        </a>
+    </div>
+
+    <div class="card card-custom border shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white border-bottom py-3 px-4 d-flex align-items-center justify-content-between">
+            <span class="fw-bold text-dark fs-6">
+                <i class="bi bi-person-badge text-primary me-2"></i>Medical Practitioner Details
+            </span>
+            <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-1 rounded-pill">
+                {% if doctor %}Updating #{{ doctor.id }}{% else %}New Specialist{% endif %}
+            </span>
+        </div>
+
+        <div class="card-body p-4">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Basic Information -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <h6 class="fw-bold text-primary mb-2 border-bottom pb-2">
+                            <i class="bi bi-info-circle me-1"></i> 1. Basic & Professional Identification
+                        </h6>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Doctor Full Name <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person text-muted"></i></span>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Dr. Rafiqul Islam" value="{{ doctor.name|default:'' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Specialization / Department <span class="text-danger">*</span></label>
+                        <select name="specialization" class="form-select">
+                            <option value="">-- Select Existing Specialization --</option>
+                            {% for spec in specializations %}
+                            <option value="{{ spec.id }}" {% if doctor and doctor.specialization_id == spec.id %}selected{% endif %}>{{ spec.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="mt-1">
+                            <input type="text" name="new_specialization" class="form-control form-control-sm" placeholder="Or type new (e.g. Neurologist, ENT, Dental)...">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Designation / Title <span class="text-danger">*</span></label>
+                        <input type="text" name="designation" class="form-control" placeholder="e.g. Professor & Head of Dept / Senior Consultant" value="{{ doctor.designation|default:'' }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Medical Degrees & Qualifications <span class="text-danger">*</span></label>
+                        <input type="text" name="degrees" class="form-control" placeholder="e.g. MBBS, FCPS (Medicine), MD, Fellow WHO" value="{{ doctor.degrees|default:'' }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">BMDC Registration No</label>
+                        <input type="text" name="bmdc_reg_no" class="form-control" placeholder="e.g. A-45892" value="{{ doctor.bmdc_reg_no|default:'' }}">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Doctor Profile Photo</label>
+                        <input type="file" name="photo" class="form-control" accept="image/*">
+                        {% if doctor.photo %}
+                        <small class="text-muted d-block mt-1">Current: <a href="{{ doctor.photo.url }}" target="_blank">View Photo</a></small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <h6 class="fw-bold text-primary mb-2 border-bottom pb-2">
+                            <i class="bi bi-telephone me-1"></i> 2. Contact & Communications
+                        </h6>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Direct Mobile Number <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-phone text-muted"></i></span>
+                            <input type="text" name="phone" class="form-control" placeholder="017XXXXXXXX" value="{{ doctor.phone|default:'' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Official Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-envelope text-muted"></i></span>
+                            <input type="email" name="email" class="form-control" placeholder="dr.name@hospital.com" value="{{ doctor.email|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chamber Schedule & Consultation Fees -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <h6 class="fw-bold text-primary mb-2 border-bottom pb-2">
+                            <i class="bi bi-calendar-range me-1"></i> 3. Chamber Schedule & Consultation Pricing
+                        </h6>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Chamber / Room Number <span class="text-danger">*</span></label>
+                        <input type="text" name="room_number" class="form-control" placeholder="e.g. Room 101, 2nd Floor" value="{{ doctor.room_number|default:'Room 101' }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Visiting Days</label>
+                        <input type="text" name="available_days" class="form-control" placeholder="Sat, Sun, Mon, Tue, Wed, Thu" value="{{ doctor.available_days|default:'Sat, Sun, Mon, Tue, Wed, Thu' }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Visiting Hours / Time Slot <span class="text-danger">*</span></label>
+                        <input type="text" name="visiting_hours" class="form-control" placeholder="e.g. 5:00 PM - 9:00 PM" value="{{ doctor.visiting_hours|default:'5:00 PM - 9:00 PM' }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">New Consultation Fee <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">৳</span>
+                            <input type="number" step="0.01" name="consultation_fee" class="form-control fw-bold text-success" placeholder="800.00" value="{{ doctor.consultation_fee|default:'800.00' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Follow-Up Fee</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">৳</span>
+                            <input type="number" step="0.01" name="follow_up_fee" class="form-control" placeholder="400.00" value="{{ doctor.follow_up_fee|default:'400.00' }}">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Diagnostic Commission (%)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" name="commission_rate_percentage" class="form-control" placeholder="10.00" value="{{ doctor.commission_rate_percentage|default:'10.00' }}">
+                            <span class="input-group-text bg-light">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-4">
+                    <a href="{% url 'doctor_list' %}" class="btn btn-outline-secondary px-4 rounded-pill">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>{% if doctor %}Save & Update Doctor{% else %}Register New Doctor{% endif %}</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

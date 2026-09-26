@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Book OPD Appointment{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-calendar2-plus text-primary me-2"></i>Issue OPD Doctor Serial / Token</h4>
+        <p class="text-muted mb-0">Select patient and specialist doctor for outdoor consultation</p>
+    </div>
+    <a href="{% url 'appointment_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Queue
+    </a>
+</div>
+
+<div class="card card-custom">
+    <div class="card-body p-4">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Select Patient <span class="text-danger">*</span></label>
+                    <select name="patient" class="form-select select2" required>
+                        <option value="">-- Choose Registered Patient --</option>
+                        {% for p in patients %}
+                        <option value="{{ p.id }}" {% if preselected_patient_id == p.id|stringformat:"i" %}selected{% endif %}>
+                            {{ p.name }} ({{ p.phone }}) - ID: {{ p.patient_id }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted d-block mt-1">If new patient, <a href="{% url 'patient_create' %}" target="_blank">click here to register first</a>.</small>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Select Doctor <span class="text-danger">*</span></label>
+                    <select name="doctor" id="doctor_select" class="form-select" required>
+                        <option value="">-- Choose Specialist Doctor --</option>
+                        {% for doc in doctors %}
+                        <option value="{{ doc.id }}" data-fee="{{ doc.consultation_fee }}" data-room="{{ doc.room_number }}" data-time="{{ doc.visiting_hours }}">
+                            Dr. {{ doc.name }} ({{ doc.specialization.name }}) - Fee: ৳{{ doc.consultation_fee }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Appointment Date <span class="text-danger">*</span></label>
+                    <input type="date" name="appointment_date" value="{{ today }}" class="form-control" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Time Slot / Schedule</label>
+                    <input type="text" name="time_slot" id="time_slot_input" class="form-control" placeholder="e.g. 05:00 PM - 09:00 PM">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Payment Status</label>
+                    <select name="payment_status" class="form-select">
+                        <option value="Paid">Paid at Counter</option>
+                        <option value="Unpaid">Unpaid / Pay Later</option>
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Patient Complaints / Symptoms (Optional)</label>
+                    <textarea name="notes" class="form-control" rows="2" placeholder="Brief reason for consultation..."></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
+                <a href="{% url 'appointment_list' %}" class="btn btn-light border px-4">Cancel</a>
+                <button type="submit" class="btn btn-primary px-5 fw-semibold shadow-sm">
+                    <i class="bi bi-printer me-1"></i> Confirm & Generate Token
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.getElementById('doctor_select').addEventListener('change', function() {
+        const selected = this.options[this.selectedIndex];
+        const time = selected.getAttribute('data-time');
+        if (time) {
+            document.getElementById('time_slot_input').value = time;
+        }
+    });
+</script>
+{% endblock %}

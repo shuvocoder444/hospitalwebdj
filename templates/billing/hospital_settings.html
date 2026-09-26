@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}Hospital Branding & System Settings — WebKoders ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-gear-fill text-primary me-2"></i>Hospital Settings & Branding</h4>
+        <p class="text-muted mb-0">Configure Hospital Name, Logos, Favicon, PDF Letterhead Banners, Doctor/Director Seal, and SMS Gateway</p>
+    </div>
+</div>
+
+<div class="card card-custom">
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- 1. Hospital Branding & Contacts -->
+            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-building me-1"></i> 1. Hospital Branding & Contact Details
+            </h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Hospital / Diagnostic Center Name <span class="text-danger">*</span></label>
+                    <input type="text" name="hospital_name" class="form-control" value="{{ setting.hospital_name }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Tagline / Subtitle</label>
+                    <input type="text" name="hospital_tagline" class="form-control" value="{{ setting.hospital_tagline|default:'' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">DGHS License / Registration No</label>
+                    <input type="text" name="reg_license_no" class="form-control" value="{{ setting.reg_license_no|default:'' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Contact Phone / Helpline <span class="text-danger">*</span></label>
+                    <input type="text" name="phone" class="form-control" value="{{ setting.phone }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">24/7 Hotline Number</label>
+                    <input type="text" name="hotline" class="form-control" value="{{ setting.hotline|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Official Email Address</label>
+                    <input type="email" name="email" class="form-control" value="{{ setting.email|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Website URL / Domain</label>
+                    <input type="text" name="website" class="form-control" value="{{ setting.website|default:'' }}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Physical Address / Location</label>
+                    <textarea name="address" class="form-control" rows="2">{{ setting.address|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <!-- 2. Visual Assets & PDF Letterhead -->
+            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-image me-1"></i> 2. Logos, Favicon & PDF Letterhead Banners
+            </h6>
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Hospital Main Logo</label>
+                    {% if setting.logo %}
+                    <div class="mb-2 p-2 bg-light border rounded text-center">
+                        <img src="{{ setting.logo.url }}" alt="Logo" style="max-height: 60px; max-width: 100%;">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="logo" class="form-control form-control-sm" accept="image/*">
+                    <small class="text-muted">PNG/JPG (Recommended height: 80px)</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Website Favicon</label>
+                    {% if setting.favicon %}
+                    <div class="mb-2 p-2 bg-light border rounded text-center">
+                        <img src="{{ setting.favicon.url }}" alt="Favicon" style="max-height: 32px;">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="favicon" class="form-control form-control-sm" accept="image/x-icon,image/png">
+                    <small class="text-muted">Browser tab icon (32x32 px)</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">PDF Header Banner</label>
+                    {% if setting.pdf_header_banner %}
+                    <div class="mb-2 p-2 bg-light border rounded text-center">
+                        <img src="{{ setting.pdf_header_banner.url }}" alt="Banner" style="max-height: 60px; max-width: 100%;">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="pdf_header_banner" class="form-control form-control-sm" accept="image/*">
+                    <small class="text-muted">For Prescriptions & Lab Reports</small>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Doctor / Director Seal & Signature</label>
+                    {% if setting.authorized_signature_seal %}
+                    <div class="mb-2 p-2 bg-light border rounded text-center">
+                        <img src="{{ setting.authorized_signature_seal.url }}" alt="Seal" style="max-height: 50px;">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="authorized_signature_seal" class="form-control form-control-sm" accept="image/*">
+                    <small class="text-muted">Transparent PNG for digital validation</small>
+                </div>
+            </div>
+
+            <!-- 3. Document Footers & Currency -->
+            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-file-earmark-text me-1"></i> 3. Document Footer Notes & Currency
+            </h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Currency Symbol</label>
+                    <input type="text" name="currency_symbol" class="form-control" value="{{ setting.currency_symbol|default:'৳' }}">
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Invoice / Money Receipt Footer Note</label>
+                    <input type="text" name="invoice_footer_note" class="form-control" value="{{ setting.invoice_footer_note|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Lab Report Footer Note</label>
+                    <input type="text" name="lab_report_footer_note" class="form-control" value="{{ setting.lab_report_footer_note|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Prescription Footer Note</label>
+                    <input type="text" name="prescription_footer_note" class="form-control" value="{{ setting.prescription_footer_note|default:'' }}">
+                </div>
+            </div>
+
+            <!-- 4. SMS Gateway Integration -->
+            <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+                <i class="bi bi-chat-dots me-1"></i> 4. SMS Gateway Integration
+            </h6>
+            <div class="row g-3 mb-4 bg-light p-3 rounded-3">
+                <div class="col-12">
+                    <div class="form-check form-switch fs-6">
+                        <input class="form-check-input" type="checkbox" name="sms_enabled" id="smsEnabled" {% if setting.sms_enabled %}checked{% endif %}>
+                        <label class="form-check-label fw-bold text-dark" for="smsEnabled">Enable Automated SMS Notifications</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">SMS Gateway Provider</label>
+                    <select name="sms_provider" class="form-select">
+                        <option value="BulkSMSBD" {% if setting.sms_provider == 'BulkSMSBD' %}selected{% endif %}>BulkSMSBD (Bangladesh)</option>
+                        <option value="Greenweb" {% if setting.sms_provider == 'Greenweb' %}selected{% endif %}>Greenweb SMS Gateway</option>
+                        <option value="SSLWireless" {% if setting.sms_provider == 'SSLWireless' %}selected{% endif %}>SSL Wireless SMS</option>
+                        <option value="Custom" {% if setting.sms_provider == 'Custom' %}selected{% endif %}>Custom HTTP SMS API URL</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">API Key / Token</label>
+                    <input type="password" name="sms_api_key" class="form-control" value="{{ setting.sms_api_key|default:'' }}" placeholder="e.g. key_12345abcdef">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Sender ID / Masking Name</label>
+                    <input type="text" name="sms_sender_id" class="form-control" value="{{ setting.sms_sender_id|default:'' }}" placeholder="e.g. WebKoders / Hospital">
+                </div>
+                <div class="col-12">
+                    <div class="d-flex flex-wrap gap-4 mt-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="sms_on_registration" id="smsReg" {% if setting.sms_on_registration %}checked{% endif %}>
+                            <label class="form-check-label small" for="smsReg">Send SMS on New Patient Registration</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="sms_on_appointment" id="smsApt" {% if setting.sms_on_appointment %}checked{% endif %}>
+                            <label class="form-check-label small" for="smsApt">Send SMS on OPD Token / Appointment</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="sms_on_lab_ready" id="smsLab" {% if setting.sms_on_lab_ready %}checked{% endif %}>
+                            <label class="form-check-label small" for="smsLab">Send SMS when Diagnostic Report is Ready</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm rounded-pill">
+                    <i class="bi bi-check2-circle me-1"></i> Save Hospital Customizations
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

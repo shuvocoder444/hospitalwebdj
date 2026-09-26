@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}Book Diagnostic Lab Tests{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-clipboard2-plus-fill text-primary me-2"></i>New Diagnostic & Pathology Order</h4>
+        <p class="text-muted mb-0">Select patient, referred consultant, tests and calculate billing</p>
+    </div>
+    <a href="{% url 'lab_orders_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Orders
+    </a>
+</div>
+
+<form method="POST" id="labOrderForm">
+    {% csrf_token %}
+    <div class="row g-4">
+        <!-- Left: Patient & Doctor Selection -->
+        <div class="col-lg-4">
+            <div class="card card-custom mb-4">
+                <div class="card-header bg-light">
+                    <span class="fw-bold"><i class="bi bi-person me-1"></i> 1. Patient & Referral</span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Patient <span class="text-danger">*</span></label>
+                        <select name="patient" class="form-select" required>
+                            <option value="">-- Choose Patient --</option>
+                            {% for p in patients %}
+                            <option value="{{ p.id }}" {% if pre_pat_id == p.id|stringformat:"i" %}selected{% endif %}>
+                                {{ p.name }} ({{ p.phone }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted"><a href="{% url 'patient_create' %}" target="_blank">+ Register new patient</a></small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Referred by Hospital Doctor</label>
+                        <select name="doctor" class="form-select">
+                            <option value="">-- In-House Consultant (Optional) --</option>
+                            {% for doc in doctors %}
+                            <option value="{{ doc.id }}">Dr. {{ doc.name }} ({{ doc.specialization.name }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Outside / External Doctor Name</label>
+                        <input type="text" name="external_doctor_name" class="form-control" placeholder="e.g. Dr. M. A. Karim, DMCH">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing Summary Box -->
+            <div class="card card-custom">
+                <div class="card-header bg-light">
+                    <span class="fw-bold"><i class="bi bi-cash-stack me-1"></i> 3. Billing & Payment</span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Total Test Fee:</span>
+                        <strong class="fs-5" id="totalFeeDisplay">৳0.00</strong>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Special Discount</label>
+                        <input type="number" step="0.01" name="discount_amount" id="discountInput" class="form-control" value="0.00" min="0">
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2 border-top pt-2">
+                        <span class="fw-bold">Payable Amount:</span>
+                        <strong class="fs-5 text-primary" id="payableDisplay">৳0.00</strong>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Paid Amount</label>
+                        <input type="number" step="0.01" name="paid_amount" id="paidInput" class="form-control" value="0.00" min="0">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Payment Method</label>
+                        <select name="payment_method" class="form-select">
+                            <option value="Cash">Cash</option>
+                            <option value="bKash">bKash</option>
+                            <option value="Nagad">Nagad</option>
+                            <option value="Card">Card</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3 border-top pt-2">
+                        <span class="text-muted">Due Amount:</span>
+                        <strong class="fs-6 text-danger" id="dueDisplay">৳0.00</strong>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">
+                        <i class="bi bi-check2-circle me-1"></i> Confirm & Generate Order
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Test Selection Catalogue -->
+        <div class="col-lg-8">
+            <div class="card card-custom">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-list-check me-1"></i> 2. Select Diagnostic Tests</span>
+                    <input type="text" id="testSearchInput" class="form-control form-control-sm w-50" placeholder="Filter tests (e.g. CBC, RBS, Sugar)...">
+                </div>
+                <div class="card-body p-0">
+                    <div style="max-height: 550px; overflow-y: auto;" class="p-3">
+                        <div class="row g-2" id="testItemsList">
+                            {% for t in tests %}
+                            <div class="col-md-6 test-item" data-name="{{ t.name|lower }} {{ t.test_code|lower }} {{ t.category.name|lower }}">
+                                <label class="border rounded p-2 d-flex align-items-center gap-3 w-100 cursor-pointer hover-bg">
+                                    <input type="checkbox" name="tests[]" value="{{ t.id }}" data-price="{{ t.price }}" class="form-check-input test-checkbox fs-5">
+                                    <div class="flex-fill">
+                                        <div class="d-flex justify-content-between">
+                                            <strong class="text-dark">{{ t.test_code }}</strong>
+                                            <span class="text-success fw-bold">৳{{ t.price }}</span>
+                                        </div>
+                                        <div class="small text-muted text-truncate" style="max-width: 250px;">{{ t.name }}</div>
+                                        <small class="badge bg-light text-secondary border">{{ t.category.name }}</small>
+                                        <small class="text-muted ms-1">Specimen: {{ t.specimen }}</small>
+                                    </div>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const checkboxes = document.querySelectorAll('.test-checkbox');
+    const totalDisplay = document.getElementById('totalFeeDisplay');
+    const payableDisplay = document.getElementById('payableDisplay');
+    const dueDisplay = document.getElementById('dueDisplay');
+    const discountInput = document.getElementById('discountInput');
+    const paidInput = document.getElementById('paidInput');
+
+    function calculateTotal() {
+        let sum = 0;
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                sum += parseFloat(cb.getAttribute('data-price') || 0);
+            }
+        });
+
+        const discount = parseFloat(discountInput.value || 0);
+        const payable = Math.max(0, sum - discount);
+        
+        // Auto update paid amount if it was default
+        if (parseFloat(paidInput.value) === 0 || parseFloat(paidInput.value) > payable) {
+            paidInput.value = payable.toFixed(2);
+        }
+
+        const paid = parseFloat(paidInput.value || 0);
+        const due = Math.max(0, payable - paid);
+
+        totalDisplay.innerText = '৳' + sum.toFixed(2);
+        payableDisplay.innerText = '৳' + payable.toFixed(2);
+        dueDisplay.innerText = '৳' + due.toFixed(2);
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', calculateTotal));
+    discountInput.addEventListener('input', calculateTotal);
+    paidInput.addEventListener('input', calculateTotal);
+
+    // Live search filter for tests
+    document.getElementById('testSearchInput').addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        document.querySelectorAll('.test-item').forEach(item => {
+            const text = item.getAttribute('data-name');
+            if (text.includes(query)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+</script>
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .hover-bg:hover { background-color: #f8fafc; border-color: #0284c7 !important; }
+</style>
+{% endblock %}
