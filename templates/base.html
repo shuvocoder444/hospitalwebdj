@@ -22,8 +22,12 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@2.0.2"></script>
     
-    <!-- Tom Select CSS for Global Searchable Dropdowns -->
+    <!-- Bootstrap 5 JS Bundle (with Popper) in HEAD to prevent duplicate listeners on HTMX navigation -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Tom Select CSS & JS for Global Searchable Dropdowns -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     
     <style>
         :root {
@@ -722,13 +726,13 @@
                 </a>
                 
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 border shadow-xs rounded-pill px-3 py-1" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 border shadow-xs rounded-pill px-3 py-1" type="button" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; font-size: 0.8rem; font-weight: 700;">
                             {{ request.user.username|first|upper|default:"A" }}
                         </div>
                         <span class="fw-semibold small text-dark">{{ request.user.get_full_name|default:request.user.username|default:"Admin Staff" }}</span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="border-radius: 12px; font-size: 0.88rem;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" aria-labelledby="userProfileDropdown" style="border-radius: 12px; font-size: 0.88rem;">
                         <li class="px-3 py-2 border-bottom">
                             <div class="fw-bold text-dark">{{ request.user.get_full_name|default:request.user.username }}</div>
                             <small class="text-muted">Role: {{ request.user.get_role_display|default:"Staff" }}</small>
@@ -738,7 +742,7 @@
                         {% endif %}
                         <li><a class="dropdown-item py-2" href="{% url 'landing' %}" target="_blank"><i class="bi bi-globe me-2 text-info"></i>Public Website</a></li>
                         <li><hr class="dropdown-divider my-1"></li>
-                        <li><a class="dropdown-item py-2 text-danger" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        <li><a class="dropdown-item py-2 text-danger" href="{% url 'logout' %}" hx-boost="false"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -805,44 +809,25 @@
         </footer>
     </div>
 
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Tom Select JS for Searchable Select Dropdowns -->
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-
     <script>
-        // Clean any leftover Google Translate cookies or injected frames
-        (function() {
-            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=" + window.location.hostname + "; path=/;";
-            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=." + window.location.hostname + "; path=/;";
-            
-            // Remove any Google Translate iframes or banners immediately
-            const removeGoogleBanners = function() {
-                const banners = document.querySelectorAll('.goog-te-banner-frame, iframe[name^="goog"], #goog-gt-tt, .skiptranslate');
-                banners.forEach(el => {
-                    if (el && el.parentNode) {
-                        el.parentNode.removeChild(el);
-                    }
+        // Global Dropdown & UI Initializers
+        function initBootstrapDropdowns(container = document) {
+            if (window.bootstrap && window.bootstrap.Dropdown) {
+                container.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function(el) {
+                    try {
+                        bootstrap.Dropdown.getOrCreateInstance(el);
+                    } catch(err) {}
                 });
-                document.body.style.top = '0px';
-                document.body.style.position = 'static';
-            };
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', removeGoogleBanners);
-            } else {
-                removeGoogleBanners();
             }
-        })();
+        }
 
         function toggleSidebar() {
             const sb = document.getElementById('appSidebar');
-            sb.classList.toggle('show');
+            if (sb) sb.classList.toggle('show');
         }
 
         // Global Searchable Dropdown Initializer (Tom Select)
         function initSearchableSelects(container = document) {
-            // Add novalidate to all forms to allow our custom validator to handle focusable & hidden selects seamlessly
             container.querySelectorAll('form').forEach(f => f.setAttribute('novalidate', 'true'));
 
             container.querySelectorAll('select:not(.no-search):not(.tomselected)').forEach(function(select) {
@@ -863,7 +848,6 @@
                         dropdownParent: 'body',
                     });
 
-                    // Clear error immediately on selection
                     ts.on('change', function(val) {
                         if (val && val !== '') {
                             ts.wrapper.classList.remove('is-invalid');
@@ -872,9 +856,7 @@
                             if (hint) hint.remove();
                         }
                     });
-                } catch(err) {
-                    // Ignore if already initialized
-                }
+                } catch(err) {}
             });
         }
 
@@ -886,7 +868,6 @@
             let firstInvalidEl = null;
             let hasError = false;
 
-            // Remove previous inline error hints in this form
             form.querySelectorAll('.field-error-hint').forEach(el => el.remove());
             form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
@@ -915,7 +896,6 @@
                     hasError = true;
                     if (!firstInvalidEl) firstInvalidEl = field;
 
-                    // Handle TomSelect wrapper if applicable
                     if (field.tomselect) {
                         const tsWrapper = field.tomselect.wrapper;
                         if (tsWrapper) {
@@ -953,7 +933,6 @@
                     e.stopPropagation();
                 }
 
-                // Show top banner alert
                 const msgContainer = document.getElementById('globalMessageContainer');
                 if (msgContainer) {
                     msgContainer.innerHTML = `
@@ -987,107 +966,154 @@
             return true;
         }
 
-        // Intercept Submit Events Globally
-        document.addEventListener('submit', function (e) {
-            validateHospitalForm(e.target, e);
-        }, true);
+        // Execute once globally
+        (function() {
+            if (window.__hospitalBaseScriptInitialized) {
+                initSearchableSelects(document);
+                initBootstrapDropdowns(document);
+                return;
+            }
+            window.__hospitalBaseScriptInitialized = true;
 
-        // Also intercept direct Submit button clicks
-        document.addEventListener('click', function (e) {
-            const btn = e.target.closest('button[type="submit"], input[type="submit"]');
-            if (btn) {
-                const form = btn.closest('form');
-                if (form) {
-                    if (!validateHospitalForm(form, e)) {
-                        e.preventDefault();
-                        e.stopImmediatePropagation();
+            // Remove any Google Translate iframes or banners
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=" + window.location.hostname + "; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=." + window.location.hostname + "; path=/;";
+
+            // Intercept Submit Events Globally
+            document.addEventListener('submit', function (e) {
+                validateHospitalForm(e.target, e);
+            }, true);
+
+            // Also intercept direct Submit button clicks
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('button[type="submit"], input[type="submit"]');
+                if (btn) {
+                    const form = btn.closest('form');
+                    if (form) {
+                        if (!validateHospitalForm(form, e)) {
+                            e.preventDefault();
+                            e.stopImmediatePropagation();
+                        }
                     }
                 }
-            }
-        }, true);
+            }, true);
 
-        // Preserve sidebar scroll position and init components on page load
-        document.addEventListener('DOMContentLoaded', function () {
-            // Initialize all searchable dropdowns
-            initSearchableSelects();
-
-            // Restore Sidebar scroll position
-            const wrapper = document.getElementById('sidebarMenuWrapper');
-            if (wrapper) {
-                const savedScroll = sessionStorage.getItem('sidebar_scroll_pos');
-                if (savedScroll !== null) {
-                    wrapper.scrollTop = parseInt(savedScroll, 10);
+            // Ensure Bootstrap dropdowns always respond across dynamic HTMX navigations
+            document.addEventListener('click', function(e) {
+                const toggle = e.target.closest('[data-bs-toggle="dropdown"]');
+                if (toggle && window.bootstrap && window.bootstrap.Dropdown) {
+                    const inst = bootstrap.Dropdown.getOrCreateInstance(toggle);
+                    // Check if it opened natively; if not, toggle it
+                    setTimeout(function() {
+                        const isOpen = toggle.classList.contains('show') || toggle.getAttribute('aria-expanded') === 'true';
+                        const menu = toggle.parentElement ? toggle.parentElement.querySelector('.dropdown-menu') : null;
+                        if (!isOpen && menu && !menu.classList.contains('show')) {
+                            inst.show();
+                        }
+                    }, 20);
                 }
-
-                const activeItem = wrapper.querySelector('.sidebar-menu a.active');
-                if (activeItem) {
-                    activeItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
-                }
-
-                wrapper.addEventListener('scroll', function () {
-                    sessionStorage.setItem('sidebar_scroll_pos', wrapper.scrollTop);
-                });
-
-                const links = wrapper.querySelectorAll('.sidebar-menu a');
-                links.forEach(function (link) {
-                    link.addEventListener('click', function () {
-                        sessionStorage.setItem('sidebar_scroll_pos', wrapper.scrollTop);
-                    });
-                });
-            }
+            });
 
             // Prevent page jerk/jumping on dummy hash links
-            document.querySelectorAll('a[href="#"]').forEach(function(anchor) {
-                anchor.addEventListener('click', function(e) {
+            document.addEventListener('click', function(e) {
+                const anchor = e.target.closest('a[href="#"]');
+                if (anchor) {
                     e.preventDefault();
-                });
+                }
             });
-        });
 
-        // Sleek Progress Bar for HTMX requests
-        const topBar = document.getElementById('topProgressBar');
-        document.addEventListener('htmx:beforeRequest', function() {
-            if (topBar) {
-                topBar.style.opacity = '1';
-                topBar.style.width = '20%';
-                setTimeout(function() {
-                    if (topBar.style.opacity === '1') {
-                        topBar.style.width = '70%';
+            // Preserve sidebar scroll position and init components on initial load
+            const initPageComponents = function() {
+                initSearchableSelects(document);
+                initBootstrapDropdowns(document);
+
+                const wrapper = document.getElementById('sidebarMenuWrapper');
+                if (wrapper) {
+                    const savedScroll = sessionStorage.getItem('sidebar_scroll_pos');
+                    if (savedScroll !== null) {
+                        wrapper.scrollTop = parseInt(savedScroll, 10);
                     }
-                }, 150);
-            }
-        });
 
-        document.addEventListener('htmx:afterOnLoad', function() {
-            if (topBar) {
-                topBar.style.width = '100%';
-                setTimeout(function() {
-                    topBar.style.opacity = '0';
+                    const activeItem = wrapper.querySelector('.sidebar-menu a.active');
+                    if (activeItem) {
+                        activeItem.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+                    }
+
+                    wrapper.addEventListener('scroll', function () {
+                        sessionStorage.setItem('sidebar_scroll_pos', wrapper.scrollTop);
+                    });
+
+                    const links = wrapper.querySelectorAll('.sidebar-menu a');
+                    links.forEach(function (link) {
+                        link.addEventListener('click', function () {
+                            sessionStorage.setItem('sidebar_scroll_pos', wrapper.scrollTop);
+                        });
+                    });
+                }
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPageComponents);
+            } else {
+                initPageComponents();
+            }
+
+            // Sleek Progress Bar for HTMX requests
+            const topBar = document.getElementById('topProgressBar');
+            document.addEventListener('htmx:beforeRequest', function() {
+                if (topBar) {
+                    topBar.style.opacity = '1';
+                    topBar.style.width = '20%';
                     setTimeout(function() {
-                        topBar.style.width = '0%';
-                    }, 250);
-                }, 200);
-            }
-        });
+                        if (topBar.style.opacity === '1') {
+                            topBar.style.width = '70%';
+                        }
+                    }, 150);
+                }
+            });
 
-        document.addEventListener('htmx:requestError', function() {
-            if (topBar) {
-                topBar.style.backgroundColor = '#ef4444';
-                topBar.style.width = '100%';
-                setTimeout(function() {
-                    topBar.style.opacity = '0';
+            document.addEventListener('htmx:afterOnLoad', function() {
+                if (topBar) {
+                    topBar.style.width = '100%';
                     setTimeout(function() {
-                        topBar.style.width = '0%';
-                        topBar.style.background = 'linear-gradient(90deg, #38bdf8, #0284c7, #2563eb)';
-                    }, 250);
-                }, 400);
-            }
-        });
+                        topBar.style.opacity = '0';
+                        setTimeout(function() {
+                            topBar.style.width = '0%';
+                        }, 250);
+                    }, 200);
+                }
+            });
 
-        // Re-initialize searchable dropdowns when HTMX swaps content
-        document.addEventListener('htmx:afterSwap', function (e) {
-            initSearchableSelects(e.detail.target);
-        });
+            document.addEventListener('htmx:requestError', function() {
+                if (topBar) {
+                    topBar.style.backgroundColor = '#ef4444';
+                    topBar.style.width = '100%';
+                    setTimeout(function() {
+                        topBar.style.opacity = '0';
+                        setTimeout(function() {
+                            topBar.style.width = '0%';
+                            topBar.style.background = 'linear-gradient(90deg, #38bdf8, #0284c7, #2563eb)';
+                        }, 250);
+                    }, 400);
+                }
+            });
+
+            // Re-initialize searchable dropdowns & Bootstrap components when HTMX swaps content
+            document.addEventListener('htmx:afterSwap', function (e) {
+                initSearchableSelects(e.detail.target);
+                initBootstrapDropdowns(document);
+            });
+
+            document.addEventListener('htmx:afterSettle', function (e) {
+                initBootstrapDropdowns(document);
+            });
+
+            document.addEventListener('htmx:historyRestore', function (e) {
+                initSearchableSelects(document);
+                initBootstrapDropdowns(document);
+            });
+        })();
     </script>
     {% block extra_scripts %}{% endblock %}
 </body>

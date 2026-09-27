@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Portal Login — {% if hospital_setting.hospital_name %}{{ hospital_setting.hospital_name }}{% else %}Hospital Management System{% endif %}</title>
+    <title>Login — {% if hospital_setting.hospital_name %}{{ hospital_setting.hospital_name }}{% else %}Hospital Management System{% endif %}</title>
     
     {% if hospital_setting.favicon %}
     <link rel="icon" type="image/png" href="{{ hospital_setting.favicon.url }}">
@@ -23,75 +23,93 @@
         :root {
             --primary: #0284c7;
             --primary-dark: #0369a1;
-            --primary-light: #e0f2fe;
             --secondary: #0f172a;
-            --surface: #ffffff;
-            --bg-page: #f1f5f9;
+            --accent: #38bdf8;
+            --bg-light: #f8fafc;
         }
-
         * {
             box-sizing: border-box;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-
         body {
             font-family: 'Plus Jakarta Sans', 'Inter', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-page);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(2, 132, 199, 0.08) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.07) 0px, transparent 50%),
-                radial-gradient(at 50% 50%, rgba(241, 245, 249, 0.5) 0px, transparent 100%);
+            color: #334155;
+            background-color: #f8fafc;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            color: #334155;
             margin: 0;
             padding: 0;
         }
 
-        .login-navbar {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-            padding: 0.85rem 1.5rem;
+        /* Top Announcement / Helpline Bar */
+        .top-info-bar {
+            background: linear-gradient(135deg, #075985 0%, #0284c7 100%);
+            color: #ffffff;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        .login-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2.5rem 1rem;
+        /* Modern Navigation Bar */
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.75rem 0;
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.04);
         }
-
-        .login-card {
+        .navbar-brand-logo {
+            max-height: 42px;
+            max-width: 140px;
+            object-fit: contain;
+            border-radius: 8px;
+            padding: 2px 4px;
             background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.9);
-            border-radius: 1.25rem;
-            box-shadow: 0 20px 40px -15px rgba(2, 132, 199, 0.1), 0 0 1px 1px rgba(226, 232, 240, 0.6);
-            width: 100%;
-            max-width: 480px;
-            overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
-        .brand-badge {
-            width: 52px;
-            height: 52px;
-            border-radius: 1rem;
+        .navbar-brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
             background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #ffffff;
-            font-size: 1.6rem;
-            box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.35);
+            font-size: 1.35rem;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+        }
+        .nav-link-custom {
+            color: #334155 !important;
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .nav-link-custom:hover {
+            color: #0284c7 !important;
+            background-color: #f0f9ff;
         }
 
-        .form-floating > .form-control:focus ~ label,
-        .form-floating > .form-control:not(:placeholder-shown) ~ label {
-            color: var(--primary);
+        /* Login Main Section */
+        .login-main-section {
+            flex: 1;
+            background: radial-gradient(120% 100% at 50% 0%, #e0f2fe 0%, #f8fafc 55%, #f1f5f9 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem;
+            box-shadow: 0 20px 40px -15px rgba(2, 132, 199, 0.12), 0 0 1px 1px rgba(226, 232, 240, 0.8);
+            padding: 2.25rem 2rem;
         }
 
         .form-control {
@@ -101,262 +119,277 @@
             font-size: 0.95rem;
             transition: all 0.2s ease;
         }
-
         .form-control:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
         }
-
         .input-group-text {
             border-radius: 0.75rem;
             border: 1.5px solid #e2e8f0;
             background-color: #f8fafc;
         }
 
-        .btn-login {
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-            color: #ffffff;
-            border: none;
-            border-radius: 0.75rem;
-            padding: 0.85rem 1.5rem;
-            font-weight: 700;
-            font-size: 1rem;
-            letter-spacing: 0.02em;
-            box-shadow: 0 8px 18px -4px rgba(2, 132, 199, 0.35);
-            transition: all 0.25s ease;
-        }
-
-        .btn-login:hover {
-            background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-            color: #ffffff;
-            transform: translateY(-1px);
-            box-shadow: 0 12px 24px -4px rgba(2, 132, 199, 0.45);
-        }
-
         .demo-role-btn {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 0.65rem;
-            padding: 0.55rem 0.5rem;
+            padding: 0.5rem;
             cursor: pointer;
             text-align: center;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
             user-select: none;
         }
-
         .demo-role-btn:hover {
             background: #f0f9ff;
             border-color: #bae6fd;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px -2px rgba(2, 132, 199, 0.15);
+            transform: translateY(-1px);
         }
-
         .demo-role-btn:active {
-            transform: scale(0.97);
+            transform: scale(0.98);
         }
 
         .pulse-highlight {
-            animation: fieldGlow 0.8s ease;
+            animation: fieldGlow 0.6s ease;
         }
-
         @keyframes fieldGlow {
-            0% { border-color: #0284c7; box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.3); }
-            50% { border-color: #38bdf8; box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.35); }
+            0% { border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25); }
             100% { border-color: #e2e8f0; box-shadow: none; }
         }
 
-        .login-alert {
-            animation: fadeInSlide 0.3s ease-out;
+        /* Footer */
+        .footer-custom {
+            background: #090d16;
+            color: #ffffff;
+            padding: 60px 0 25px;
+            margin-top: auto;
         }
-
-        @keyframes fadeInSlide {
-            from {
-                opacity: 0;
-                transform: translateY(-6px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .footer-custom a,
+        .footer-custom p,
+        .footer-custom span,
+        .footer-custom li,
+        .footer-custom small,
+        .footer-custom div {
+            color: #ffffff !important;
+        }
+        .footer-custom a:hover {
+            color: #38bdf8 !important;
+            text-decoration: underline !important;
         }
     </style>
 </head>
-<body>
+<body hx-boost="false">
 
-    <!-- Minimal Header / Navigation -->
-    <header class="login-navbar">
-        <div class="container-fluid d-flex align-items-center justify-content-between px-md-4">
-            <a href="{% url 'landing' %}" class="d-flex align-items-center gap-2 text-decoration-none">
-                {% if hospital_setting.logo %}
-                <img src="{{ hospital_setting.logo.url }}" alt="Logo" class="rounded" style="height: 36px; object-fit: contain;">
-                {% else %}
-                <div class="rounded-3 bg-primary text-white d-flex align-items-center justify-content-center shadow-xs" style="width: 34px; height: 34px;">
-                    <i class="bi bi-hospital"></i>
-                </div>
-                {% endif %}
-                <span class="fw-bold text-dark fs-6">{{ hospital_setting.hospital_name|default:"Hospital Management System" }}</span>
-            </a>
-            
-            <a href="{% url 'landing' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold d-inline-flex align-items-center gap-2 shadow-xs">
-                <i class="bi bi-arrow-left"></i>
-                <span>Public Website</span>
-            </a>
+    <!-- Top Medical Info Bar (Same as Homepage) -->
+    <div class="top-info-bar">
+        <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-1">
+            <div class="d-flex align-items-center gap-3">
+                <span><i class="bi bi-telephone-fill text-warning me-1"></i> 24/7 Helpline: <strong>{{ hospital_setting.helpline_number|default:"+880 1700-000000" }}</strong></span>
+                <span class="opacity-50 d-none d-md-inline">|</span>
+                <span class="d-none d-md-inline"><i class="bi bi-geo-alt-fill text-info me-1"></i> {{ hospital_setting.address|default:"Dhaka, Bangladesh" }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-white rounded-pill px-3 py-1 small fw-bold shadow-xs border" style="color: #000000 !important; background-color: #ffffff !important;">
+                    <i class="bi bi-shield-check me-1 text-primary"></i> <span style="color: #000000 !important;">24/7 Emergency & Care</span>
+                </span>
+            </div>
         </div>
-    </header>
+    </div>
 
-    <!-- Login Area -->
-    <main class="login-container">
-        <div class="login-card">
+    <!-- Navigation Bar (Same as Homepage) -->
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'landing' %}">
+                {% if hospital_setting.logo %}
+                    <img src="{{ hospital_setting.logo.url }}" alt="Logo" class="navbar-brand-logo border shadow-xs">
+                {% else %}
+                    <div class="navbar-brand-icon">
+                        <i class="bi bi-hospital"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <span class="fw-bold fs-5 text-dark">{{ hospital_setting.hospital_name|default:"Hospital Management System" }}</span>
+                </div>
+            </a>
             
-            <!-- Card Header -->
-            <div class="p-4 pt-4 pb-3 border-bottom bg-white">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="brand-badge">
-                        <i class="bi bi-shield-lock-fill"></i>
-                    </div>
-                    <div>
-                        <span class="badge bg-primary-subtle text-primary fw-bold text-uppercase px-2 py-1 mb-1" style="font-size: 0.68rem; letter-spacing: 0.05em;">Staff & Doctor Portal</span>
-                        <h4 class="fw-bold mb-0 text-dark">Staff Sign In</h4>
-                        <small class="text-muted">Enter your authorized credentials to access ERP</small>
-                    </div>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMenu">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-semibold">
+                    <li class="nav-item"><a class="nav-link nav-link-custom" href="{% url 'landing' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" href="{% url 'landing' %}#modules">Clinical Modules</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" href="{% url 'landing' %}#doctors">Our Specialists</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-custom" href="{% url 'landing' %}#diagnostics">Diagnostic LIS</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{% url 'landing' %}" class="btn btn-outline-primary fw-semibold px-4 py-2 rounded-pill shadow-xs d-flex align-items-center gap-1">
+                        <i class="bi bi-arrow-left"></i>
+                        <span>Back to Website</span>
+                    </a>
                 </div>
             </div>
+        </div>
+    </nav>
 
-            <!-- Messages / Flash Notifications (Logout, Errors, etc.) -->
-            {% if messages %}
-            <div class="px-4 pt-3 login-alert">
-                {% for message in messages %}
-                <div class="alert {% if message.tags == 'error' %}alert-danger border-danger-subtle bg-danger-subtle text-danger-emphasis{% elif message.tags == 'warning' %}alert-warning border-warning-subtle bg-warning-subtle text-warning-emphasis{% elif message.tags == 'success' %}alert-success border-success-subtle bg-success-subtle text-success-emphasis{% else %}alert-info border-info-subtle bg-info-subtle text-info-emphasis{% endif %} alert-dismissible fade show shadow-xs border rounded-3 p-3 mb-0 d-flex align-items-start gap-2" role="alert">
-                    <div class="fs-5 lh-1 mt-1">
-                        {% if message.tags == 'error' %}
-                        <i class="bi bi-exclamation-octagon-fill text-danger"></i>
-                        {% elif message.tags == 'warning' %}
-                        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
-                        {% elif message.tags == 'success' %}
-                        <i class="bi bi-check-circle-fill text-success"></i>
-                        {% else %}
-                        <i class="bi bi-info-circle-fill text-primary"></i>
-                        {% endif %}
-                    </div>
-                    <div class="flex-grow-1" style="font-size: 0.92rem;">
-                        <strong>
-                            {% if message.tags == 'error' %}
-                            Login Error:
-                            {% elif message.tags == 'warning' %}
-                            Notice:
-                            {% elif message.tags == 'success' %}
-                            Success:
+    <!-- Main Login Section -->
+    <main class="login-main-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
+                    
+                    <!-- Flash Notifications (Logout, Errors) -->
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-danger bg-danger-subtle border-danger-subtle text-danger-emphasis{% elif message.tags == 'warning' %}alert-warning bg-warning-subtle border-warning-subtle text-warning-emphasis{% elif message.tags == 'success' %}alert-success bg-success-subtle border-success-subtle text-success-emphasis{% else %}alert-info bg-info-subtle border-info-subtle text-info-emphasis{% endif %} alert-dismissible fade show p-3 mb-3 border shadow-sm rounded-3 d-flex align-items-center gap-2" role="alert">
+                            <i class="bi {% if message.tags == 'error' %}bi-exclamation-octagon-fill text-danger{% elif message.tags == 'warning' %}bi-exclamation-triangle-fill text-warning{% elif message.tags == 'success' %}bi-check-circle-fill text-success{% else %}bi-info-circle-fill text-primary{% endif %} fs-5"></i>
+                            <div class="flex-grow-1" style="font-size: 0.92rem;">{{ message }}</div>
+                            <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Clean Login Card -->
+                    <div class="login-card">
+                        
+                        <!-- Hospital Logo & Name -->
+                        <div class="text-center mb-4">
+                            {% if hospital_setting.logo %}
+                                <img src="{{ hospital_setting.logo.url }}" alt="Logo" class="mb-2" style="max-height: 48px; object-fit: contain;">
                             {% else %}
-                            Status:
+                                <div class="rounded-3 bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2 shadow-xs" style="width: 44px; height: 44px; font-size: 1.35rem;">
+                                    <i class="bi bi-hospital"></i>
+                                </div>
                             {% endif %}
-                        </strong>
-                        <div>{{ message }}</div>
-                    </div>
-                    <button type="button" class="btn-close ms-auto shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            <!-- Form Body -->
-            <div class="p-4">
-                <form method="POST" action="{% url 'login' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ next|default:'dashboard' }}">
-
-                    <div class="mb-3">
-                        <label for="usernameInput" class="form-label small fw-bold text-dark mb-1">Username / Staff ID</label>
-                        <div class="input-group">
-                            <span class="input-group-text border-end-0"><i class="bi bi-person text-muted"></i></span>
-                            <input type="text" name="username" id="usernameInput" class="form-control border-start-0 ps-1" placeholder="e.g. admin or dr_rafiq" value="{{ entered_username|default:'' }}" required autofocus>
+                            <h5 class="fw-bold text-dark mb-0">{{ hospital_setting.hospital_name|default:"Hospital Management System" }}</h5>
                         </div>
-                    </div>
 
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label for="passwordInput" class="form-label small fw-bold text-dark mb-0">Password</label>
-                            <a href="javascript:void(0)" onclick="togglePasswordVisibility()" class="text-decoration-none text-muted small" style="font-size: 0.78rem;">
-                                <i class="bi bi-eye" id="toggleIcon"></i> <span id="toggleText">Show Password</span>
-                            </a>
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-text border-end-0"><i class="bi bi-shield-key text-muted"></i></span>
-                            <input type="password" name="password" id="passwordInput" class="form-control border-start-0 ps-1" placeholder="••••••••" required>
-                        </div>
-                    </div>
+                        <!-- Form -->
+                        <form method="POST" action="{% url 'login' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ next|default:'dashboard' }}">
 
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="rememberMe" checked>
-                            <label class="form-check-label text-muted small" for="rememberMe">Remember session</label>
-                        </div>
-                        <span class="text-muted small" style="font-size: 0.8rem;">
-                            <i class="bi bi-shield-check text-success me-1"></i>Secure Intranet
-                        </span>
-                    </div>
+                            <div class="mb-3">
+                                <label for="usernameInput" class="form-label small fw-semibold text-secondary mb-1">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text border-end-0"><i class="bi bi-person text-muted"></i></span>
+                                    <input type="text" name="username" id="usernameInput" class="form-control border-start-0 ps-1" placeholder="Enter username" value="{{ entered_username|default:'' }}" required autofocus>
+                                </div>
+                            </div>
 
-                    <button type="submit" class="btn btn-login w-100 d-flex align-items-center justify-content-center gap-2">
-                        <i class="bi bi-box-arrow-in-right"></i>
-                        <span>Sign In to ERP Dashboard</span>
-                    </button>
-                </form>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="passwordInput" class="form-label small fw-semibold text-secondary mb-0">Password</label>
+                                    <a href="javascript:void(0)" onclick="togglePasswordVisibility()" class="text-decoration-none text-muted small" style="font-size: 0.75rem;">
+                                        <i class="bi bi-eye" id="toggleIcon"></i> <span id="toggleText">Show</span>
+                                    </a>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                                    <input type="password" name="password" id="passwordInput" class="form-control border-start-0 ps-1" placeholder="Enter password" required>
+                                </div>
+                            </div>
 
-                <!-- Quick 1-Click Role Login for Staff / Demo -->
-                <div class="mt-4 pt-3 border-top">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="text-muted fw-bold" style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Quick Role 1-Click Autofill:</span>
-                        <span class="badge bg-light text-secondary border px-2 py-0" style="font-size: 0.65rem;">Click to Test</span>
-                    </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mt-4" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                <span>Login</span>
+                            </button>
+                        </form>
 
-                    <div class="row g-2">
-                        <div class="col-6 col-sm-4">
-                            <div class="demo-role-btn" onclick="fillDemo('admin', 'admin123')">
-                                <small class="fw-bold text-dark d-block text-truncate"><i class="bi bi-shield-check text-primary me-1"></i>Admin</small>
-                                <span class="text-muted" style="font-size: 0.68rem;">admin123</span>
+                        <!-- Quick 1-Click Role Login for Demo/Staff -->
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="text-muted fw-semibold" style="font-size: 0.72rem; text-transform: uppercase;">Quick 1-Click Role Login:</span>
+                                <span class="badge bg-light text-secondary border px-2 py-0" style="font-size: 0.65rem;">Autofill</span>
+                            </div>
+
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="demo-role-btn" onclick="fillDemo('admin', 'admin123')">
+                                        <small class="fw-bold text-dark d-block"><i class="bi bi-shield-check text-primary me-1"></i>Admin</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="demo-role-btn" onclick="fillDemo('reception', 'reception123')">
+                                        <small class="fw-bold text-dark d-block"><i class="bi bi-headset text-success me-1"></i>Reception</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="demo-role-btn" onclick="fillDemo('dr_rafiq', 'doctor123')">
+                                        <small class="fw-bold text-dark d-block"><i class="bi bi-person-badge text-info me-1"></i>Doctor</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="demo-role-btn" onclick="fillDemo('labtech', 'lab123')">
+                                        <small class="fw-bold text-dark d-block"><i class="bi bi-virus text-warning me-1"></i>Lab Tech</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="demo-role-btn" onclick="fillDemo('reception', 'reception123')">
-                                <small class="fw-bold text-dark d-block text-truncate"><i class="bi bi-headset text-success me-1"></i>Reception</small>
-                                <span class="text-muted" style="font-size: 0.68rem;">reception123</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="demo-role-btn" onclick="fillDemo('dr_rafiq', 'doctor123')">
-                                <small class="fw-bold text-dark d-block text-truncate"><i class="bi bi-person-badge text-info me-1"></i>Dr. Rafiq</small>
-                                <span class="text-muted" style="font-size: 0.68rem;">doctor123</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="demo-role-btn" onclick="fillDemo('labtech', 'lab123')">
-                                <small class="fw-bold text-dark d-block text-truncate"><i class="bi bi-virus text-warning me-1"></i>Lab Tech</small>
-                                <span class="text-muted" style="font-size: 0.68rem;">lab123</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="demo-role-btn" onclick="fillDemo('pharmacist', 'pharm123')">
-                                <small class="fw-bold text-dark d-block text-truncate"><i class="bi bi-capsule text-danger me-1"></i>Pharmacist</small>
-                                <span class="text-muted" style="font-size: 0.68rem;">pharm123</span>
-                            </div>
-                        </div>
-                        <div class="col-6 col-sm-4">
-                            <div class="demo-role-btn" onclick="fillDemo('dr_nusrat', 'doctor123')">
-                                <small class="fw-bold text-dark d-block text-truncate"><i class="bi bi-person-heart text-purple me-1"></i>Dr. Nusrat</small>
-                                <span class="text-muted" style="font-size: 0.68rem;">doctor123</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="text-center mt-3 pt-2">
-                    <small class="text-muted" style="font-size: 0.75rem;">
-                        <i class="bi bi-lock-fill text-muted me-1"></i>256-Bit SSL Encrypted Healthcare System • WebKoders ERP
-                    </small>
+                    </div>
                 </div>
             </div>
-
         </div>
     </main>
+
+    <!-- Footer (Same as Homepage) -->
+    <footer class="footer-custom" style="background-color: #090d16 !important; color: #ffffff !important;">
+        <div class="container">
+            <div class="row g-4 pb-4 border-bottom border-secondary border-opacity-25">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="p-2 bg-primary text-white rounded-3">
+                            <i class="bi bi-hospital fs-4"></i>
+                        </div>
+                        <h5 class="fw-bold text-white mb-0">{{ hospital_setting.hospital_name|default:"WebKoders Healthcare" }}</h5>
+                    </div>
+                    <p class="small text-white mb-3" style="color: #ffffff !important; opacity: 0.9;">
+                        Specialized healthcare management and hospital automation software engineered by WebKoders.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="https://facebook.com" target="_blank" class="btn btn-sm btn-dark text-white border-secondary rounded-circle"><i class="bi bi-facebook"></i></a>
+                        <a href="https://linkedin.com" target="_blank" class="btn btn-sm btn-dark text-white border-secondary rounded-circle"><i class="bi bi-linkedin"></i></a>
+                        <a href="https://youtube.com" target="_blank" class="btn btn-sm btn-dark text-white border-secondary rounded-circle"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-6">
+                    <h6 class="text-white fw-bold mb-3">Clinical Modules</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2 small">
+                        <li><a href="{% url 'landing' %}#modules" class="text-white text-decoration-none">Patient EHR</a></li>
+                        <li><a href="{% url 'landing' %}#modules" class="text-white text-decoration-none">OPD Tokens</a></li>
+                        <li><a href="{% url 'landing' %}#modules" class="text-white text-decoration-none">Diagnostic LIS</a></li>
+                        <li><a href="{% url 'landing' %}#modules" class="text-white text-decoration-none">Pharmacy POS</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-6">
+                    <h6 class="text-white fw-bold mb-3">Quick Links</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2 small">
+                        <li><a href="{% url 'landing' %}" class="text-white text-decoration-none">Home Page</a></li>
+                        <li><a href="{% url 'dashboard' %}" class="text-white text-decoration-none">ERP Dashboard</a></li>
+                        <li><a href="/admin/" target="_blank" class="text-white text-decoration-none">Admin Panel</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-4">
+                    <h6 class="text-white fw-bold mb-3">Helpline & Support</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2 small" style="color: #ffffff !important;">
+                        <li style="color: #ffffff !important;"><i class="bi bi-geo-alt text-info me-2"></i> {{ hospital_setting.address|default:"437 Shahid Jahanara Imam Road, New Elephant Road, Dhaka-1205" }}</li>
+                        <li style="color: #ffffff !important;"><i class="bi bi-telephone text-info me-2"></i> {{ hospital_setting.helpline_number|default:"+880 1700-000000" }}</li>
+                        <li style="color: #ffffff !important;"><i class="bi bi-envelope text-info me-2"></i> {{ hospital_setting.email|default:"support@hospitalsoftwarebd.com" }}</li>
+                        <li style="color: #ffffff !important;"><i class="bi bi-clock text-info me-2"></i> 24/7 Emergency & Medical Support</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-4 text-center text-white small" style="color: #ffffff !important;">
+                &copy; {% now "Y" %} {{ hospital_setting.hospital_name|default:"Hospital Management System" }}. All Rights Reserved. | Powered by <a href="https://webkoders.com" target="_blank" class="text-info text-decoration-none fw-semibold">WebKoders</a>
+            </div>
+        </div>
+    </footer>
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -369,11 +402,11 @@
             if (passInput.type === 'password') {
                 passInput.type = 'text';
                 toggleIcon.className = 'bi bi-eye-slash';
-                toggleText.innerText = 'Hide Password';
+                toggleText.innerText = 'Hide';
             } else {
                 passInput.type = 'password';
                 toggleIcon.className = 'bi bi-eye';
-                toggleText.innerText = 'Show Password';
+                toggleText.innerText = 'Show';
             }
         }
 
@@ -389,7 +422,7 @@
                 setTimeout(() => {
                     userInput.classList.remove('pulse-highlight');
                     passInput.classList.remove('pulse-highlight');
-                }, 800);
+                }, 600);
             }
         }
     </script>

@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -98,6 +100,10 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     messages.info(request, "You have been logged out successfully.")
+    if request.headers.get('HX-Request') or request.META.get('HTTP_HX_REQUEST'):
+        response = HttpResponse()
+        response['HX-Redirect'] = reverse('login')
+        return response
     return redirect('login')
 
 @login_required
