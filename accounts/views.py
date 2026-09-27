@@ -80,23 +80,25 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     
+    next_url = request.GET.get('next') or request.POST.get('next') or 'dashboard'
+    
     if request.method == 'POST':
-        u = request.POST.get('username')
-        p = request.POST.get('password')
+        u = request.POST.get('username', '').strip()
+        p = request.POST.get('password', '')
         user = authenticate(request, username=u, password=p)
         if user is not None:
             login(request, user)
-            return redirect(request.GET.get('next', 'dashboard'))
+            return redirect(next_url)
         else:
             messages.error(request, "Invalid username or password. Please try again.")
-            return redirect('landing')
+            return render(request, 'accounts/login.html', {'next': next_url, 'entered_username': u})
             
-    return redirect('landing')
+    return render(request, 'accounts/login.html', {'next': next_url})
 
 def logout_view(request):
     logout(request)
     messages.info(request, "You have been logged out successfully.")
-    return redirect('landing')
+    return redirect('login')
 
 @login_required
 def dashboard_view(request):
